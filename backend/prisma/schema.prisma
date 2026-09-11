@@ -1,0 +1,515 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ENUMS
+
+enum UserRole {
+  ADMIN
+  STAFF
+  DRIVER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum MembershipType {
+  NONE
+  MEMBER
+}
+
+enum OrderStatus {
+  RECEIVED
+  WASHING
+  DRYING
+  IRONING
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIAL
+  PAID
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  QRIS
+  OTHER
+}
+
+enum PaymentTransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum DeliveryType {
+  PICKUP
+  DELIVERY
+}
+
+enum DeliveryStatus {
+  REQUESTED
+  ASSIGNED
+  ON_THE_WAY
+  PICKED_UP
+  DELIVERING
+  DELIVERED
+  CANCELLED
+}
+
+enum InventoryTransactionType {
+  PURCHASE
+  USAGE
+  ADJUSTMENT
+  RETURN
+}
+
+enum MachineStatus {
+  ACTIVE
+  MAINTENANCE
+  INACTIVE
+  BROKEN
+}
+
+enum ExpenseCategory {
+  ELECTRICITY
+  WATER
+  DETERGENT
+  SUPPLIES
+  MACHINE_MAINTENANCE
+  DELIVERY
+  RENT
+  SALARY
+  OTHER
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+}
+
+
+// 1. USERS
+
+model User {
+  id           String     @id @default(uuid()) @db.Uuid
+  name         String     @db.VarChar(150)
+  email        String     @unique @db.VarChar(150)
+  passwordHash String     @map("password_hash")
+  phone        String?    @db.VarChar(30)
+
+  role   UserRole
+  status UserStatus @default(ACTIVE)
+
+  vehicleType   String?   @map("vehicle_type") @db.VarChar(50)
+  vehicleNumber String?   @map("vehicle_number") @db.VarChar(30)
+  lastLoginAt   DateTime? @map("last_login_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  createdOrders         Order[]                @relation("OrderCreatedBy")
+  receivedPayments      Payment[]              @relation("PaymentReceivedBy")
+  assignedDeliveries    Delivery[]             @relation("DeliveryDriver")
+  inventoryTransactions InventoryTransaction[] @relation("InventoryCreatedBy")
+  expenses              Expense[]              @relation("ExpenseCreatedBy")
+  notifications         Notification[]
+
+  @@index([email])
+  @@index([role])
+  @@index([status])
+  @@map("users")
+}
+
+
+// 2. CUSTOMERS
+
+model Customer {
+  id           String @id @default(uuid()) @db.Uuid
+  customerCode String @unique @map("customer_code") @db.VarChar(30)
+
+  name    String  @db.VarChar(150)
+  phone   String  @unique @db.VarChar(30)
+  email   String? @db.VarChar(150)
+  address String?
+  notes   String?
+
+  membershipType      MembershipType @default(NONE) @map("membership_type")
+  membershipDiscount  Decimal        @default(0) @map("membership_discount") @db.Decimal(5, 2)
+  membershipStartedAt DateTime?      @map("membership_started_at")
+  membershipExpiredAt DateTime?      @map("membership_expired_at")
+
+  loyaltyPoints Int @default(0) @map("loyalty_points")
+
+  membershipHistory Json? @map("membership_history")
+  loyaltyHistory    Json? @map("loyalty_history")
+
+  deletedAt DateTime? @map("deleted_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  orders Order[]
+
+  @@index([customerCode])
+  @@index([name])
+  @@index([phone])
+  @@index([membershipType])
+  @@index([deletedAt])
+  @@map("customers")
+}
+
+
+// 3. SERVICES
+
+model Service {
+  id          String  @id @default(uuid()) @db.Uuid
+  name        String  @db.VarChar(150)
+  description String?
+
+  unit  String  @db.VarChar(30)
+  price Decimal @db.Decimal(14, 2)
+
+  inventoryUsage Json? @map("inventory_usage")
+
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  orderItems OrderItem[]
+
+  @@index([name])
+  @@index([isActive])
+  @@map("services")
+}
+
+
+// 4. ORDERS
+
+model Order {
+  id          String @id @default(uuid()) @db.Uuid
+  orderCode   String @unique @map("order_code") @db.VarChar(40)
+  customerId  String @map("customer_id") @db.Uuid
+  createdById String @map("created_by_id") @db.Uuid
+
+  status        OrderStatus  @default(RECEIVED)
+  paymentStatus PaymentStatus @default(UNPAID)
+
+  subtotal    Decimal @default(0) @db.Decimal(14, 2)
+  discount    Decimal @default(0) @db.Decimal(14, 2)
+  deliveryFee Decimal @default(0) @map("delivery_fee") @db.Decimal(14, 2)
+  total       Decimal @default(0) @db.Decimal(14, 2)
+
+  dueAt DateTime? @map("due_at")
+  note  String?
+
+  statusHistory Json? @map("status_history")
+
+  completedAt DateTime? @map("completed_at")
+  cancelledAt DateTime? @map("cancelled_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id])
+  createdBy User     @relation("OrderCreatedBy", fields: [createdById], references: [id])
+
+  items OrderItem[]
+
+  payments Payment[]
+
+  deliveries Delivery[]
+
+  inventoryTransactions InventoryTransaction[]
+
+  @@index([orderCode])
+  @@index([customerId])
+  @@index([createdById])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([dueAt])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+
+// 5. ORDER ITEMS
+
+model OrderItem {
+  id        String @id @default(uuid()) @db.Uuid
+  orderId   String @map("order_id") @db.Uuid
+  serviceId String @map("service_id") @db.Uuid
+
+  quantity      Decimal @db.Decimal(12, 3)
+  priceSnapshot Decimal @map("price_snapshot") @db.Decimal(14, 2)
+  subtotal      Decimal @db.Decimal(14, 2)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id])
+
+  inventoryTransactions InventoryTransaction[]
+
+  @@index([orderId])
+  @@index([serviceId])
+  @@map("order_items")
+}
+
+
+// 6. PAYMENTS
+
+model Payment {
+  id           String @id @default(uuid()) @db.Uuid
+  orderId      String @map("order_id") @db.Uuid
+  receivedById String @map("received_by_id") @db.Uuid
+
+  method PaymentMethod
+  amount Decimal @db.Decimal(14, 2)
+
+  transactionCode String?                  @map("transaction_code") @db.VarChar(100)
+  status          PaymentTransactionStatus @default(SUCCESS)
+
+  paidAt DateTime @default(now()) @map("paid_at")
+
+  note      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  order      Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  receivedBy User  @relation("PaymentReceivedBy", fields: [receivedById], references: [id])
+
+  @@index([orderId])
+  @@index([receivedById])
+  @@index([method])
+  @@index([transactionCode])
+  @@index([status])
+  @@index([paidAt])
+  @@map("payments")
+}
+
+
+// 7. DELIVERIES
+
+model Delivery {
+  id       String @id @default(uuid()) @db.Uuid
+  orderId  String @map("order_id") @db.Uuid
+  driverId String? @map("driver_id") @db.Uuid
+
+  type   DeliveryType
+  status DeliveryStatus @default(REQUESTED)
+
+  recipientName  String @map("recipient_name") @db.VarChar(150)
+  recipientPhone String @map("recipient_phone") @db.VarChar(30)
+
+  address String
+
+  latitude  Decimal? @db.Decimal(10, 7)
+  longitude Decimal? @db.Decimal(10, 7)
+
+  scheduledAt DateTime? @map("scheduled_at")
+
+  assignedAt  DateTime? @map("assigned_at")
+  startedAt   DateTime? @map("started_at")
+  pickedUpAt  DateTime? @map("picked_up_at")
+  deliveredAt DateTime? @map("delivered_at")
+  cancelledAt DateTime? @map("cancelled_at")
+
+  statusHistory Json? @map("status_history")
+
+  notes String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  order  Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  driver User? @relation("DeliveryDriver", fields: [driverId], references: [id])
+
+  @@unique([orderId, type])
+  @@index([orderId])
+  @@index([driverId])
+  @@index([type])
+  @@index([status])
+  @@index([scheduledAt])
+  @@map("deliveries")
+}
+
+
+// 8. INVENTORY ITEMS
+
+model InventoryItem {
+  id   String @id @default(uuid()) @db.Uuid
+  sku  String @unique @db.VarChar(50)
+  name String @db.VarChar(150)
+
+  category String? @db.VarChar(80)
+  unit     String  @db.VarChar(30)
+
+  currentStock Decimal  @default(0) @map("current_stock") @db.Decimal(14, 3)
+  minimumStock Decimal  @default(0) @map("minimum_stock") @db.Decimal(14, 3)
+  maximumStock Decimal? @map("maximum_stock") @db.Decimal(14, 3)
+
+  costPrice Decimal @default(0) @map("cost_price") @db.Decimal(14, 2)
+
+  supplierName  String? @map("supplier_name") @db.VarChar(150)
+  supplierPhone String? @map("supplier_phone") @db.VarChar(30)
+
+  lastPurchasePrice Decimal? @map("last_purchase_price") @db.Decimal(14, 2)
+  lastPurchaseAt    DateTime? @map("last_purchase_at")
+
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  transactions InventoryTransaction[]
+
+  @@index([sku])
+  @@index([name])
+  @@index([category])
+  @@index([isActive])
+  @@index([currentStock])
+  @@map("inventory_items")
+}
+
+
+// 9. INVENTORY TRANSACTIONS
+
+model InventoryTransaction {
+  id              String @id @default(uuid()) @db.Uuid
+  inventoryItemId String @map("inventory_item_id") @db.Uuid
+  createdById     String @map("created_by_id") @db.Uuid
+
+  type InventoryTransactionType
+
+  quantity    Decimal @db.Decimal(14, 3)
+  stockBefore Decimal @map("stock_before") @db.Decimal(14, 3)
+  stockAfter  Decimal @map("stock_after") @db.Decimal(14, 3)
+
+  orderId     String? @map("order_id") @db.Uuid
+  orderItemId String? @map("order_item_id") @db.Uuid
+
+  supplierName      String?  @map("supplier_name") @db.VarChar(150)
+  purchasePrice     Decimal? @map("purchase_price") @db.Decimal(14, 2)
+  purchaseReference String?  @map("purchase_reference") @db.VarChar(100)
+
+  note      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  inventoryItem InventoryItem @relation(fields: [inventoryItemId], references: [id])
+
+  createdBy User @relation("InventoryCreatedBy", fields: [createdById], references: [id])
+
+  order Order? @relation(fields: [orderId], references: [id])
+
+  orderItem OrderItem? @relation(fields: [orderItemId], references: [id])
+
+  @@index([inventoryItemId])
+  @@index([type])
+  @@index([orderId])
+  @@index([orderItemId])
+  @@index([purchaseReference])
+  @@index([createdById])
+  @@index([createdAt])
+  @@map("inventory_transactions")
+}
+
+
+// 10. MACHINES
+
+model Machine {
+  id          String @id @default(uuid()) @db.Uuid
+  machineCode String @unique @map("machine_code") @db.VarChar(40)
+
+  name String @db.VarChar(150)
+  type String @db.VarChar(80)
+
+  brand        String? @db.VarChar(100)
+  model        String? @db.VarChar(100)
+  serialNumber String? @map("serial_number") @db.VarChar(100)
+
+  purchaseDate  DateTime? @map("purchase_date") @db.Date
+  purchasePrice Decimal?  @map("purchase_price") @db.Decimal(14, 2)
+
+  status   MachineStatus @default(ACTIVE)
+  location String?
+
+  lastMaintenanceAt DateTime? @map("last_maintenance_at")
+  nextMaintenanceAt DateTime? @map("next_maintenance_at")
+
+  maintenanceCost  Decimal @default(0) @map("maintenance_cost") @db.Decimal(14, 2)
+  maintenanceNotes String? @map("maintenance_notes")
+
+  maintenanceHistory Json? @map("maintenance_history")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([machineCode])
+  @@index([type])
+  @@index([status])
+  @@index([serialNumber])
+  @@index([nextMaintenanceAt])
+  @@map("machines")
+}
+
+
+// 11. EXPENSES
+
+model Expense {
+  id          String          @id @default(uuid()) @db.Uuid
+  category    ExpenseCategory
+  description String          @db.VarChar(255)
+  amount      Decimal         @db.Decimal(14, 2)
+
+  createdById String   @map("created_by_id") @db.Uuid
+  expenseDate DateTime @map("expense_date")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  createdBy User @relation("ExpenseCreatedBy", fields: [createdById], references: [id])
+
+  @@index([category])
+  @@index([createdById])
+  @@index([expenseDate])
+  @@map("expenses")
+}
+
+
+// 12. NOTIFICATIONS
+
+model Notification {
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+
+  title   String           @db.VarChar(150)
+  message String
+  type    NotificationType @default(INFO)
+
+  isRead Boolean   @default(false) @map("is_read")
+  readAt DateTime? @map("read_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
