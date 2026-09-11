@@ -5,6 +5,8 @@ import morgan from "morgan";
 import { prisma } from "./lib/prisma";
 import authRoutes from "./routes/auth.routes";
 import { authenticate } from "./middlewares/authenticate";
+import { authorize } from "./middlewares/authorize";
+import { success } from "zod";
 
 const app = express();
 
@@ -46,6 +48,37 @@ app.get("/api/auth/me", authenticate, (req, res) => {
     user: req.user,
   });
 });
+
+app.get("/api/test/admin", authenticate, authorize("ADMIN"), (req, res) => {
+  res.json({
+    success: true,
+    message: "Welcome ADMIN",
+  });
+});
+
+app.get(
+  "/api/test/staff",
+  authenticate,
+  authorize("ADMIN", "STAFF"),
+  (req, res) => {
+    res.json({
+      success: true,
+      message: "Welcome ADMIN OR STAFF",
+    });
+  },
+);
+
+app.get(
+  "/api/test/driver",
+  authenticate,
+  authorize("ADMIN", "DRIVER"),
+  (req, res) => {
+    res.json({
+      success: true,
+      message: "Welcome ADMIN or DRIVER",
+    });
+  },
+);
 
 app.use("/api/auth", authRoutes);
 
