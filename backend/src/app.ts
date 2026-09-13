@@ -6,6 +6,7 @@ import { prisma } from "./lib/prisma";
 import authRoutes from "./routes/auth.routes";
 import { authenticate } from "./middlewares/authenticate";
 import { authorize } from "./middlewares/authorize";
+import { errorHandler } from "./middlewares/errorHandler";
 import { success } from "zod";
 
 const app = express();
@@ -16,14 +17,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 
-app.get("/api/health", (req, res) => {
+app.get("/api/health", (_req, res) => {
   res.json({
     success: true,
     message: "Laundrify API is running",
   });
 });
 
-app.get("/api/health/db", async (req, res) => {
+app.get("/api/health/db", async (_req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
 
@@ -49,7 +50,7 @@ app.get("/api/auth/me", authenticate, (req, res) => {
   });
 });
 
-app.get("/api/test/admin", authenticate, authorize("ADMIN"), (req, res) => {
+app.get("/api/test/admin", authenticate, authorize("ADMIN"), (_req, res) => {
   res.json({
     success: true,
     message: "Welcome ADMIN",
@@ -60,7 +61,7 @@ app.get(
   "/api/test/staff",
   authenticate,
   authorize("ADMIN", "STAFF"),
-  (req, res) => {
+  (_req, res) => {
     res.json({
       success: true,
       message: "Welcome ADMIN OR STAFF",
@@ -72,7 +73,7 @@ app.get(
   "/api/test/driver",
   authenticate,
   authorize("ADMIN", "DRIVER"),
-  (req, res) => {
+  (_req, res) => {
     res.json({
       success: true,
       message: "Welcome ADMIN or DRIVER",
@@ -81,5 +82,6 @@ app.get(
 );
 
 app.use("/api/auth", authRoutes);
+app.use(errorHandler);
 
 export default app;
