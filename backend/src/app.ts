@@ -7,6 +7,8 @@ import authRoutes from "./routes/auth.routes";
 import { authenticate } from "./middlewares/authenticate";
 import { authorize } from "./middlewares/authorize";
 import { errorHandler } from "./middlewares/errorHandler";
+import customerRoutes from "./routes/customer.routes";
+import serviceRoutes from "./routes/service.routes";
 import { success } from "zod";
 
 const app = express();
@@ -82,6 +84,8 @@ app.get(
 );
 
 app.use("/api/auth", authRoutes);
+app.use("/api/customers", customerRoutes);
+app.use("/api/services", serviceRoutes);
 app.use(errorHandler);
 
 export default app;
