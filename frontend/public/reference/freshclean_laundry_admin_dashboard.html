@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreshClean Laundry - Admin Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0284c7', // Primary Cyan/Blue
+                            600: '#0369a1',
+                            700: '#075985',
+                            800: '#0c4a6e',
+                            900: '#0f172a',
+                        },
+                        mint: {
+                            50: '#ecfdf5',
+                            500: '#10b981',
+                            600: '#059669',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        /* Glassmorphism styling */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        /* Smooth Sidebar transitions */
+        .sidebar-transition {
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Custom animated gradient backdrop for highlight card */
+        .hero-gradient {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #0f172a 100%);
+        }
+
+        /* Bubble animation for hero card */
+        .bubble-accent {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.05));
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased bg-slate-50 min-h-screen flex flex-col">
+
+    <div class="flex h-screen overflow-hidden">
+
+        <!-- ================= SIDEBAR ================= -->
+        <aside id="sidebar" class="sidebar-transition fixed inset-y-0 left-0 z-40 w-64 bg-slate-900 text-slate-300 flex flex-col justify-between border-r border-slate-800 -translate-x-full md:translate-x-0 md:static md:z-auto shadow-2xl md:shadow-none">
+            
+            <!-- Sidebar Top Header -->
+            <div>
+                <div class="h-16 flex items-center justify-between px-5 border-b border-slate-800/80">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-500 to-cyan-400 flex items-center justify-center text-white shadow-lg shadow-brand-500/30 flex-shrink-0">
+                            <i class="fa-solid fa-soap text-lg animate-pulse"></i>
+                        </div>
+                        <div class="brand-text transition-opacity duration-200">
+                            <h1 class="font-extrabold text-base text-white tracking-tight leading-none">FreshClean</h1>
+                            <span class="text-[10px] text-brand-300 font-semibold tracking-wider uppercase">Admin Portal</span>
+                        </div>
+                    </div>
+
+                    <!-- Close button for mobile screen -->
+                    <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white p-1 rounded-lg">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Navigation Menu Links -->
+                <nav class="p-3 space-y-1.5 mt-2">
+                    <a href="#" onclick="setActiveNav(this, 'Dashboard')" class="nav-item active flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white shadow-md shadow-brand-600/30">
+                        <i class="fa-solid fa-chart-pie text-base w-5 text-center"></i>
+                        <span class="brand-text">Dashboard</span>
+                    </a>
+                    
+                    <a href="#" onclick="setActiveNav(this, 'Orders')" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/80 hover:text-slate-100 transition-all">
+                        <i class="fa-solid fa-jug-detergent text-base w-5 text-center"></i>
+                        <span class="brand-text flex-1">Orders</span>
+                        <span class="brand-text bg-brand-500/20 text-brand-300 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-brand-500/30">12 Baru</span>
+                    </a>
+
+                    <a href="#" onclick="setActiveNav(this, 'Customers')" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/80 hover:text-slate-100 transition-all">
+                        <i class="fa-solid fa-users text-base w-5 text-center"></i>
+                        <span class="brand-text">Customers</span>
+                    </a>
+
+                    <a href="#" onclick="setActiveNav(this, 'Operations')" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/80 hover:text-slate-100 transition-all">
+                        <i class="fa-solid fa-gears text-base w-5 text-center"></i>
+                        <span class="brand-text">Operations</span>
+                    </a>
+
+                    <a href="#" onclick="setActiveNav(this, 'Finance')" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/80 hover:text-slate-100 transition-all">
+                        <i class="fa-solid fa-wallet text-base w-5 text-center"></i>
+                        <span class="brand-text">Finance</span>
+                    </a>
+
+                    <a href="#" onclick="setActiveNav(this, 'Settings')" class="nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/80 hover:text-slate-100 transition-all">
+                        <i class="fa-solid fa-sliders text-base w-5 text-center"></i>
+                        <span class="brand-text">Settings</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Sidebar Bottom Items -->
+            <div class="p-3 border-t border-slate-800/80 space-y-3">
+                <div class="bg-slate-800/50 rounded-xl p-3 border border-slate-700/50 brand-text">
+                    <div class="flex items-center gap-2 text-xs font-bold text-slate-200">
+                        <i class="fa-solid fa-headset text-brand-400"></i>
+                        <span>Pusat Bantuan</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">Kendala mesin atau sistem? Hubungi IT Support.</p>
+                    <button onclick="showToast('Menghubungkan ke Tim Support...')" class="mt-2 text-[11px] font-bold text-brand-400 hover:text-brand-300 flex items-center gap-1">
+                        <span>Buka Tiket</span> <i class="fa-solid fa-arrow-right text-[9px]"></i>
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-between px-2 pt-1">
+                    <span class="text-xs text-slate-400 font-medium brand-text">Mode Gelap</span>
+                    <button onclick="toggleDarkMode()" class="w-10 h-5 bg-slate-700 rounded-full p-0.5 relative transition-colors focus:outline-none" id="themeToggleBtn">
+                        <div class="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform" id="themeToggleCircle"></div>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Overlay backdrop for mobile sidebar -->
+        <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-30 hidden md:hidden"></div>
+
+        <!-- ================= MAIN CONTENT WRAPPER ================= -->
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+            <!-- TOP NAVBAR -->
+            <header class="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between z-20 flex-shrink-0">
+                
+                <div class="flex items-center gap-3">
+                    <!-- Toggle Sidebar Desktop/Mobile -->
+                    <button onclick="toggleSidebar()" class="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors">
+                        <i class="fa-solid fa-bars text-lg"></i>
+                    </button>
+
+                    <!-- Global Search Bar -->
+                    <div class="relative hidden sm:block w-64 lg:w-80">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" placeholder="Cari order ID, pelanggan... (Ctrl+K)" class="w-full pl-9 pr-12 py-2 bg-slate-100/80 border border-slate-200/80 rounded-xl text-xs text-slate-700 focus:outline-none focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all">
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-200">⌘K</span>
+                    </div>
+                </div>
+
+                <!-- Right Navbar Actions -->
+                <div class="flex items-center gap-3">
+                    
+                    <!-- Live Time & Date -->
+                    <div class="hidden lg:flex flex-col text-right pr-2 border-r border-slate-200">
+                        <span id="liveTime" class="text-xs font-bold text-slate-800 font-mono">10:42:15 WIB</span>
+                        <span id="liveDate" class="text-[10px] text-slate-500 font-medium">Selasa, 24 Okt 2026</span>
+                    </div>
+
+                    <!-- + New Order Button -->
+                    <button onclick="openNewOrderModal()" class="px-3.5 py-2 bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-700 hover:to-brand-600 text-white rounded-xl text-xs font-bold shadow-md shadow-brand-500/20 flex items-center gap-1.5 transition-all">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                        <span class="hidden sm:inline">Order Baru</span>
+                    </button>
+
+                    <!-- Notifications Dropdown -->
+                    <div class="relative">
+                        <button onclick="toggleNotifications()" class="relative p-2.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors">
+                            <i class="fa-regular fa-bell text-base"></i>
+                            <span class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
+                        </button>
+
+                        <!-- Notifications Popover -->
+                        <div id="notifDropdown" class="hidden absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 p-4">
+                            <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-2">
+                                <h4 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Notifikasi (3)</h4>
+                                <button class="text-[11px] font-bold text-brand-600 hover:underline">Tandai Dibaca</button>
+                            </div>
+                            <div class="space-y-2 max-h-64 overflow-y-auto">
+                                <div class="p-2.5 rounded-xl bg-brand-50/60 hover:bg-brand-50 flex gap-3 items-start transition-colors">
+                                    <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        <i class="fa-solid fa-check text-xs"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-slate-800">Order #FC-1092 Selesai</p>
+                                        <p class="text-[11px] text-slate-500 mt-0.5">Cuci Komplit Bpk. Hendra siap diambil.</p>
+                                        <span class="text-[9px] text-slate-400 mt-1 block">5 menit lalu</span>
+                                    </div>
+                                </div>
+                                <div class="p-2.5 rounded-xl hover:bg-slate-50 flex gap-3 items-start transition-colors">
+                                    <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        <i class="fa-solid fa-triangle-exclamation text-xs"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-slate-800">Stok Deterjen Menipis</p>
+                                        <p class="text-[11px] text-slate-500 mt-0.5">Sisa Lavender Liquid 4.5 Liter.</p>
+                                        <span class="text-[9px] text-slate-400 mt-1 block">22 menit lalu</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Profile Dropdown -->
+                    <div class="relative">
+                        <button onclick="toggleUserMenu()" class="flex items-center gap-2.5 p-1.5 hover:bg-slate-100 rounded-xl transition-colors">
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=120&auto=format&fit=crop" alt="Admin Avatar" class="w-8 h-8 rounded-xl object-cover ring-2 ring-brand-500/30">
+                            <div class="text-left hidden md:block">
+                                <p class="text-xs font-bold text-slate-800 leading-tight">Admin FreshClean</p>
+                                <span class="text-[10px] text-brand-600 font-semibold bg-brand-50 px-1.5 py-0.2 rounded border border-brand-200">Super Admin</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 hidden sm:block"></i>
+                        </button>
+
+                        <!-- User Menu Popover -->
+                        <div id="userMenuDropdown" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 p-2">
+                            <a href="#" class="flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-xl transition-colors">
+                                <i class="fa-regular fa-user text-slate-400 w-4"></i> Profil Saya
+                            </a>
+                            <a href="#" class="flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-xl transition-colors">
+                                <i class="fa-solid fa-shield-halved text-slate-400 w-4"></i> Keamanan
+                            </a>
+                            <div class="my-1 border-t border-slate-100"></div>
+                            <button onclick="triggerLogout()" class="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition-colors">
+                                <i class="fa-solid fa-arrow-right-from-bracket w-4"></i> Keluar (Logout)
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </header>
+
+            <!-- MAIN DASHBOARD CONTENT AREA -->
+            <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6">
+
+                <!-- Welcome Header Banner -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl sm:text-2xl font-extrabold text-slate-800 tracking-tight">Selamat Datang, Admin! 👋</h2>
+                        <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Berikut adalah ringkasan operasional & performa bisnis laundry Anda hari ini.</p>
+                    </div>
+
+                    <!-- Filter Date Range Picker -->
+                    <div class="flex items-center gap-2 self-start sm:self-auto bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
+                        <i class="fa-regular fa-calendar text-slate-400 text-xs"></i>
+                        <select class="text-xs font-bold text-slate-700 bg-transparent focus:outline-none cursor-pointer">
+                            <option value="today">Hari Ini (24 Okt)</option>
+                            <option value="week">Minggu Ini</option>
+                            <option value="month">Bulan Ini</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 4 PRIMARY METRIC CARDS -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    
+                    <!-- Stat Card 1: Pendapatan Hari Ini -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden group">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Pendapatan Hari Ini</span>
+                            <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
+                                <i class="fa-solid fa-money-bill-wave"></i>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <h3 class="text-2xl font-extrabold text-slate-800 tracking-tight">Rp 1.450.000</h3>
+                            <div class="flex items-center gap-1.5 mt-2">
+                                <span class="inline-flex items-center gap-0.5 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                    <i class="fa-solid fa-arrow-trend-up"></i> +14.2%
+                                </span>
+                                <span class="text-[11px] text-slate-400 font-medium">vs kemarin</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stat Card 2: Order Hari Ini -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden group">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Order Hari Ini</span>
+                            <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
+                                <i class="fa-solid fa-basket-shopping"></i>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <h3 class="text-2xl font-extrabold text-slate-800 tracking-tight">48 Pesanan</h3>
+                            <div class="flex items-center gap-1.5 mt-2">
+                                <span class="inline-flex items-center gap-0.5 text-[11px] font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full border border-brand-200">
+                                    <i class="fa-solid fa-arrow-trend-up"></i> +8.5%
+                                </span>
+                                <span class="text-[11px] text-slate-400 font-medium">vs kemarin</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stat Card 3: Profit Hari Ini -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden group">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Profit Bersih</span>
+                            <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
+                                <i class="fa-solid fa-chart-line"></i>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <h3 class="text-2xl font-extrabold text-slate-800 tracking-tight">Rp 870.000</h3>
+                            <div class="flex items-center gap-1.5 mt-2">
+                                <span class="inline-flex items-center gap-0.5 text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200">
+                                    <i class="fa-solid fa-arrow-trend-up"></i> +11.0%
+                                </span>
+                                <span class="text-[11px] text-slate-400 font-medium">margin 60%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stat Card 4: Customer Aktif -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition-shadow relative overflow-hidden group">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Customer Aktif</span>
+                            <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
+                                <i class="fa-solid fa-users text-lg"></i>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <h3 class="text-2xl font-extrabold text-slate-800 tracking-tight">342 Pelanggan</h3>
+                            <div class="flex items-center gap-1.5 mt-2">
+                                <span class="inline-flex items-center gap-0.5 text-[11px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                                    <i class="fa-solid fa-user-plus"></i> +24
+                                </span>
+                                <span class="text-[11px] text-slate-400 font-medium">minggu ini</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- CHARTS SECTION -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Line Chart: Revenue & Profit -->
+                    <div class="lg:col-span-2 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                            <div>
+                                <h3 class="text-base font-extrabold text-slate-800">Tren Pendapatan & Profit</h3>
+                                <p class="text-xs text-slate-500">Perbandingan pemasukan vs keuntungan bersih per bulan.</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="updateRevenueChart('bulanan')" id="btnChartBulanan" class="px-3 py-1 bg-brand-50 text-brand-700 text-xs font-bold rounded-lg border border-brand-200">Bulanan</button>
+                                <button onclick="updateRevenueChart('mingguan')" id="btnChartMingguan" class="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded-lg hover:bg-slate-200">Mingguan</button>
+                            </div>
+                        </div>
+                        <div class="h-64 sm:h-72 relative w-full">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Doughnut Chart: Order Status Breakdown -->
+                    <div class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-base font-extrabold text-slate-800">Status Order Bulanan</h3>
+                                <i class="fa-solid fa-circle-info text-slate-400 text-xs"></i>
+                            </div>
+                            <p class="text-xs text-slate-500 mb-4">Distribusi status pengerjaan laundry bulan ini.</p>
+                        </div>
+                        <div class="h-56 relative flex items-center justify-center my-auto">
+                            <canvas id="orderStatusChart"></canvas>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 pt-4 border-t border-slate-100 text-[11px]">
+                            <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Selesai: <strong>62%</strong></div>
+                            <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span> Cuci: <strong>18%</strong></div>
+                            <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Setrika: <strong>12%</strong></div>
+                            <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> Antar: <strong>8%</strong></div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- HIGHLIGHT METRIC: TOTAL PENDAPATAN SEJAK DIBUKA -->
+                <div class="hero-gradient rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-xl shadow-brand-900/20">
+                    <div class="bubble-accent w-32 h-32 -top-10 -right-10"></div>
+                    <div class="bubble-accent w-20 h-20 bottom-2 right-1/4"></div>
+
+                    <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                        <div class="space-y-2">
+                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-xs font-bold text-brand-100">
+                                <i class="fa-solid fa-gem text-amber-300"></i>
+                                <span>Pencapaian Keseluruhan</span>
+                            </div>
+                            <h3 class="text-xs sm:text-sm font-semibold text-brand-200 uppercase tracking-wider">Total Pendapatan Sejak Laundry Dibuka</h3>
+                            <p class="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">Rp 482.950.000</p>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 w-full md:w-auto pt-4 md:pt-0 border-t md:border-t-0 md:border-l border-white/20 md:pl-8">
+                            <div>
+                                <p class="text-xs text-brand-200 font-medium">Total Cucian Selesai</p>
+                                <p class="text-xl font-bold text-white mt-1">14.820 Kg</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-brand-200 font-medium">Kepuasan Pelanggan</p>
+                                <p class="text-xl font-bold text-white mt-1 flex items-center gap-1">
+                                    <span>4.9/5.0</span> <i class="fa-solid fa-star text-amber-400 text-sm"></i>
+                                </p>
+                            </div>
+                            <div class="col-span-2 sm:col-span-1">
+                                <p class="text-xs text-brand-200 font-medium">Cabang Utama</p>
+                                <p class="text-xl font-bold text-white mt-1">Margonda Depok</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RECENT ORDERS & NEW CUSTOMERS GRID -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- RECENT ORDERS TABLE (2 Cols) -->
+                    <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between overflow-hidden">
+                        <div>
+                            <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div>
+                                    <h3 class="text-base font-extrabold text-slate-800">Pesanan Terbaru</h3>
+                                    <p class="text-xs text-slate-500">Daftar transaksi masuk hari ini.</p>
+                                </div>
+                                <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-bold">
+                                    <button onclick="filterOrdersTable('all')" class="order-filter-btn px-2.5 py-1 rounded-lg bg-white text-brand-700 shadow-2xs">Semua</button>
+                                    <button onclick="filterOrdersTable('Proses')" class="order-filter-btn px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900">Proses</button>
+                                    <button onclick="filterOrdersTable('Selesai')" class="order-filter-btn px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900">Selesai</button>
+                                </div>
+                            </div>
+
+                            <!-- Table Container -->
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-slate-50/80 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider border-b border-slate-100">
+                                            <th class="py-3 px-4">Order ID</th>
+                                            <th class="py-3 px-4">Pelanggan</th>
+                                            <th class="py-3 px-4">Layanan</th>
+                                            <th class="py-3 px-4">Berat/Qty</th>
+                                            <th class="py-3 px-4">Total</th>
+                                            <th class="py-3 px-4">Status</th>
+                                            <th class="py-3 px-4 text-center">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ordersTableBody" class="divide-y divide-slate-100 text-xs font-medium text-slate-700">
+                                        
+                                        <!-- Row 1 -->
+                                        <tr class="hover:bg-slate-50/80 transition-colors">
+                                            <td class="py-3.5 px-4 font-extrabold text-brand-600">#FC-1092</td>
+                                            <td class="py-3.5 px-4 font-semibold text-slate-800">Hendra Wijaya</td>
+                                            <td class="py-3.5 px-4"><span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold">Express 3 Jam</span></td>
+                                            <td class="py-3.5 px-4">4.5 Kg</td>
+                                            <td class="py-3.5 px-4 font-bold">Rp 67.500</td>
+                                            <td class="py-3.5 px-4">
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Selesai
+                                                </span>
+                                            </td>
+                                            <td class="py-3.5 px-4 text-center">
+                                                <button onclick="viewOrderDetail('FC-1092', 'Hendra Wijaya', 'Express 3 Jam', '4.5 Kg', 'Rp 67.500', 'Selesai')" class="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all">
+                                                    <i class="fa-solid fa-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+
+                                        <!-- Row 2 -->
+                                        <tr class="hover:bg-slate-50/80 transition-colors">
+                                            <td class="py-3.5 px-4 font-extrabold text-brand-600">#FC-1093</td>
+                                            <td class="py-3.5 px-4 font-semibold text-slate-800">Siti Rahmawati</td>
+                                            <td class="py-3.5 px-4"><span class="px-2 py-0.5 rounded-md bg-brand-50 text-brand-700 border border-brand-200 text-[10px] font-bold">Cuci Komplit</span></td>
+                                            <td class="py-3.5 px-4">6.0 Kg</td>
+                                            <td class="py-3.5 px-4 font-bold">Rp 48.000</td>
+                                            <td class="py-3.5 px-4">
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sky-50 text-sky-700 font-bold text-[10px] border border-sky-200">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-sky-500 animate-ping"></span> Washing
+                                                </span>
+                                            </td>
+                                            <td class="py-3.5 px-4 text-center">
+                                                <button onclick="viewOrderDetail('FC-1093', 'Siti Rahmawati', 'Cuci Komplit', '6.0 Kg', 'Rp 48.000', 'Washing')" class="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all">
+                                                    <i class="fa-solid fa-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+
+                                        <!-- Row 3 -->
+                                        <tr class="hover:bg-slate-50/80 transition-colors">
+                                            <td class="py-3.5 px-4 font-extrabold text-brand-600">#FC-1094</td>
+                                            <td class="py-3.5 px-4 font-semibold text-slate-800">Budi Pratama</td>
+                                            <td class="py-3.5 px-4"><span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold">Cuci Bedcover</span></td>
+                                            <td class="py-3.5 px-4">2 Pcs</td>
+                                            <td class="py-3.5 px-4 font-bold">Rp 75.000</td>
+                                            <td class="py-3.5 px-4">
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 font-bold text-[10px] border border-amber-200">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Ironing
+                                                </span>
+                                            </td>
+                                            <td class="py-3.5 px-4 text-center">
+                                                <button onclick="viewOrderDetail('FC-1094', 'Budi Pratama', 'Cuci Bedcover', '2 Pcs', 'Rp 75.000', 'Ironing')" class="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all">
+                                                    <i class="fa-solid fa-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+
+                                        <!-- Row 4 -->
+                                        <tr class="hover:bg-slate-50/80 transition-colors">
+                                            <td class="py-3.5 px-4 font-extrabold text-brand-600">#FC-1095</td>
+                                            <td class="py-3.5 px-4 font-semibold text-slate-800">Diana Putri</td>
+                                            <td class="py-3.5 px-4"><span class="px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold">Dry Clean Jas</span></td>
+                                            <td class="py-3.5 px-4">1 Pcs</td>
+                                            <td class="py-3.5 px-4 font-bold">Rp 55.000</td>
+                                            <td class="py-3.5 px-4">
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Selesai
+                                                </span>
+                                            </td>
+                                            <td class="py-3.5 px-4 text-center">
+                                                <button onclick="viewOrderDetail('FC-1095', 'Diana Putri', 'Dry Clean Jas', '1 Pcs', 'Rp 55.000', 'Selesai')" class="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all">
+                                                    <i class="fa-solid fa-eye"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Table Footer -->
+                        <div class="p-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-500">
+                            <span>Menampilkan 4 dari 48 pesanan hari ini</span>
+                            <a href="#" class="text-brand-600 hover:underline flex items-center gap-1">
+                                Lihat Semua Orders <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- NEW CUSTOMERS CARD (1 Col) -->
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <h3 class="text-base font-extrabold text-slate-800">Pelanggan Terbaru</h3>
+                                    <p class="text-xs text-slate-500">Member yang baru mendaftar minggu ini.</p>
+                                </div>
+                                <span class="text-xs font-bold text-brand-600 bg-brand-50 px-2 py-1 rounded-lg">+12 Member</span>
+                            </div>
+
+                            <div class="space-y-3.5">
+                                
+                                <!-- Customer 1 -->
+                                <div class="flex items-center justify-between p-2.5 hover:bg-slate-50 rounded-xl transition-colors">
+                                    <div class="flex items-center gap-3">
+                                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=100&auto=format&fit=crop" class="w-9 h-9 rounded-full object-cover">
+                                        <div>
+                                            <p class="text-xs font-bold text-slate-800">Rian Ardianto</p>
+                                            <p class="text-[10px] text-slate-400">Bergabung 2 jam lalu</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-bold text-[10px]">VIP Gold</span>
+                                        <button onclick="showToast('Membuka Chat WhatsApp Rian...')" class="block mt-1 text-emerald-600 hover:text-emerald-700 text-xs ml-auto">
+                                            <i class="fa-brands fa-whatsapp text-sm"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Customer 2 -->
+                                <div class="flex items-center justify-between p-2.5 hover:bg-slate-50 rounded-xl transition-colors">
+                                    <div class="flex items-center gap-3">
+                                        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=100&auto=format&fit=crop" class="w-9 h-9 rounded-full object-cover">
+                                        <div>
+                                            <p class="text-xs font-bold text-slate-800">Anita Kusuma</p>
+                                            <p class="text-[10px] text-slate-400">Bergabung 5 jam lalu</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-bold text-[10px]">Regular</span>
+                                        <button onclick="showToast('Membuka Chat WhatsApp Anita...')" class="block mt-1 text-emerald-600 hover:text-emerald-700 text-xs ml-auto">
+                                            <i class="fa-brands fa-whatsapp text-sm"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Customer 3 -->
+                                <div class="flex items-center justify-between p-2.5 hover:bg-slate-50 rounded-xl transition-colors">
+                                    <div class="flex items-center gap-3">
+                                        <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=100&auto=format&fit=crop" class="w-9 h-9 rounded-full object-cover">
+                                        <div>
+                                            <p class="text-xs font-bold text-slate-800">Fajar Nugraha</p>
+                                            <p class="text-[10px] text-slate-400">Bergabung Kemarin</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-bold text-[10px]">Regular</span>
+                                        <button onclick="showToast('Membuka Chat WhatsApp Fajar...')" class="block mt-1 text-emerald-600 hover:text-emerald-700 text-xs ml-auto">
+                                            <i class="fa-brands fa-whatsapp text-sm"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <button onclick="showToast('Navigasi ke Menu Customers...')" class="w-full mt-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors">
+                            Kelola Semua Pelanggan
+                        </button>
+                    </div>
+
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- MODAL: NEW ORDER CREATION -->
+    <div id="newOrderModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 relative">
+            <button onclick="closeNewOrderModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-sm">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="mb-5">
+                <h3 class="text-lg font-extrabold text-slate-800">Buat Pesanan Laundry Baru 🧺</h3>
+                <p class="text-xs text-slate-500">Masukkan detail cucian pelanggan.</p>
+            </div>
+            
+            <form onsubmit="handleCreateOrder(event)" class="space-y-4">
+                <div>
+                    <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">Nama Pelanggan</label>
+                    <input type="text" id="orderCustomer" required placeholder="Contoh: Budi Santoso" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">Jenis Layanan</label>
+                        <select id="orderService" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <option value="Cuci Komplit">Cuci Komplit (Rp 8.000/kg)</option>
+                            <option value="Express 3 Jam">Express 3 Jam (Rp 15.000/kg)</option>
+                            <option value="Cuci Bedcover">Cuci Bedcover (Rp 35.000/pcs)</option>
+                            <option value="Dry Clean Jas">Dry Clean Jas (Rp 55.000/pcs)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">Berat / Qty</label>
+                        <input type="text" id="orderWeight" required placeholder="misal: 3.5 Kg" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-extrabold text-slate-600 uppercase mb-1">Metode Pembayaran</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="border rounded-xl p-2 text-center text-xs font-bold cursor-pointer hover:bg-slate-50 flex items-center justify-center gap-1">
+                            <input type="radio" name="pay" checked class="text-brand-600"> Tunai
+                        </label>
+                        <label class="border rounded-xl p-2 text-center text-xs font-bold cursor-pointer hover:bg-slate-50 flex items-center justify-center gap-1">
+                            <input type="radio" name="pay" class="text-brand-600"> QRIS
+                        </label>
+                        <label class="border rounded-xl p-2 text-center text-xs font-bold cursor-pointer hover:bg-slate-50 flex items-center justify-center gap-1">
+                            <input type="radio" name="pay" class="text-brand-600"> Transfer
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl transition-all shadow-md mt-2">
+                    Simpan & Cetak Struk
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ORDER DETAIL PREVIEW -->
+    <div id="orderDetailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative">
+            <button onclick="closeOrderDetailModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-sm">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="text-center mb-4 border-b border-slate-100 pb-4">
+                <span class="w-10 h-10 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center mx-auto text-lg mb-2">
+                    <i class="fa-solid fa-receipt"></i>
+                </span>
+                <h3 class="text-base font-extrabold text-slate-800" id="detailModalTitle">Detail Order #FC-1092</h3>
+                <span id="detailModalStatus" class="inline-block mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Selesai</span>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <div class="flex justify-between py-1 border-b border-slate-50">
+                    <span class="text-slate-400">Nama Pelanggan:</span>
+                    <span class="font-bold text-slate-800" id="detailCustomer">-</span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-slate-50">
+                    <span class="text-slate-400">Layanan:</span>
+                    <span class="font-bold text-slate-800" id="detailService">-</span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-slate-50">
+                    <span class="text-slate-400">Berat/Jumlah:</span>
+                    <span class="font-bold text-slate-800" id="detailWeight">-</span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-slate-50">
+                    <span class="text-slate-400">Total Biaya:</span>
+                    <span class="font-bold text-brand-600 text-sm" id="detailTotal">-</span>
+                </div>
+            </div>
+
+            <div class="mt-6 flex gap-2">
+                <button onclick="showToast('Mencetak Struk Thermal...')" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl">
+                    <i class="fa-solid fa-print mr-1"></i> Cetak Struk
+                </button>
+                <button onclick="showToast('Notifikasi WhatsApp Terkirim!')" class="flex-1 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl">
+                    <i class="fa-brands fa-whatsapp mr-1"></i> WA Notif
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <script>
+        // --- 1. Live Time Indicator ---
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' WIB';
+            const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+            const dateStr = now.toLocaleDateString('id-ID', options);
+            
+            document.getElementById('liveTime').innerText = timeStr;
+            document.getElementById('liveDate').innerText = dateStr;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // --- 2. Sidebar Toggle ---
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        // --- 3. Sidebar Nav Active State ---
+        function setActiveNav(element, title) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.className = "nav-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/80 hover:text-slate-100 transition-all";
+            });
+            
+            element.className = "nav-item active flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all bg-brand-600 text-white shadow-md shadow-brand-600/30";
+            showToast(`Membuka Halaman ${title}`);
+        }
+
+        // --- 4. Dropdowns ---
+        function toggleNotifications() {
+            document.getElementById('notifDropdown').classList.toggle('hidden');
+            document.getElementById('userMenuDropdown').classList.add('hidden');
+        }
+
+        function toggleUserMenu() {
+            document.getElementById('userMenuDropdown').classList.toggle('hidden');
+            document.getElementById('notifDropdown').classList.add('hidden');
+        }
+
+        // --- 5. Theme Switcher ---
+        let isDark = false;
+        function toggleDarkMode() {
+            isDark = !isDark;
+            const circle = document.getElementById('themeToggleCircle');
+            const btn = document.getElementById('themeToggleBtn');
+
+            if (isDark) {
+                circle.classList.add('translate-x-5');
+                btn.classList.replace('bg-slate-700', 'bg-brand-600');
+                document.documentElement.classList.add('dark');
+                showToast("Mode Gelap Diterapkan");
+            } else {
+                circle.classList.remove('translate-x-5');
+                btn.classList.replace('bg-brand-600', 'bg-slate-700');
+                document.documentElement.classList.remove('dark');
+                showToast("Mode Terang Diterapkan");
+            }
+        }
+
+        // --- 6. Toast System ---
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            toast.className = "pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl bg-slate-900 text-white text-xs font-semibold shadow-2xl border-l-4 border-brand-400 transform transition-all duration-300 translate-y-[-10px] opacity-0 max-w-sm";
+            toast.innerHTML = `<i class="fa-solid fa-circle-info text-brand-400"></i> <span>${msg}</span>`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-[-10px]', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-[-10px]', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- 7. Modals ---
+        function openNewOrderModal() {
+            document.getElementById('newOrderModal').classList.remove('hidden');
+        }
+
+        function closeNewOrderModal() {
+            document.getElementById('newOrderModal').classList.add('hidden');
+        }
+
+        function handleCreateOrder(e) {
+            e.preventDefault();
+            const name = document.getElementById('orderCustomer').value;
+            const service = document.getElementById('orderService').value;
+            const weight = document.getElementById('orderWeight').value;
+
+            closeNewOrderModal();
+            showToast(`Order Baru atas nama ${name} berhasil dibuat!`, 'success');
+            
+            // Append to table dynamically
+            const tbody = document.getElementById('ordersTableBody');
+            const newRow = document.createElement('tr');
+            newRow.className = "hover:bg-slate-50/80 transition-colors bg-brand-50/30";
+            newRow.innerHTML = `
+                <td class="py-3.5 px-4 font-extrabold text-brand-600">#FC-1096</td>
+                <td class="py-3.5 px-4 font-semibold text-slate-800">${name}</td>
+                <td class="py-3.5 px-4"><span class="px-2 py-0.5 rounded-md bg-brand-50 text-brand-700 border border-brand-200 text-[10px] font-bold">${service}</span></td>
+                <td class="py-3.5 px-4">${weight}</td>
+                <td class="py-3.5 px-4 font-bold">Rp 45.000</td>
+                <td class="py-3.5 px-4">
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sky-50 text-sky-700 font-bold text-[10px] border border-sky-200">
+                        <span class="w-1.5 h-1.5 rounded-full bg-sky-500 animate-ping"></span> Washing
+                    </span>
+                </td>
+                <td class="py-3.5 px-4 text-center">
+                    <button onclick="viewOrderDetail('FC-1096', '${name}', '${service}', '${weight}', 'Rp 45.000', 'Washing')" class="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </td>
+            `;
+            tbody.insertBefore(newRow, tbody.firstChild);
+        }
+
+        function viewOrderDetail(id, name, service, weight, total, status) {
+            document.getElementById('detailModalTitle').innerText = `Detail Order #${id}`;
+            document.getElementById('detailCustomer').innerText = name;
+            document.getElementById('detailService').innerText = service;
+            document.getElementById('detailWeight').innerText = weight;
+            document.getElementById('detailTotal').innerText = total;
+            document.getElementById('detailModalStatus').innerText = status;
+
+            document.getElementById('orderDetailModal').classList.remove('hidden');
+        }
+
+        function closeOrderDetailModal() {
+            document.getElementById('orderDetailModal').classList.add('hidden');
+        }
+
+        function triggerLogout() {
+            if (confirm("Apakah Anda yakin ingin keluar dari Admin Dashboard?")) {
+                showToast("Logging out...", "info");
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            }
+        }
+
+        function filterOrdersTable(filter) {
+            showToast(`Filter tabel: ${filter}`);
+        }
+
+        // --- 8. Chart.js Initialization ---
+        let revenueChart;
+
+        function initCharts() {
+            // Revenue vs Profit Line Chart
+            const ctxRev = document.getElementById('revenueChart').getContext('2d');
+            
+            const gradientRev = ctxRev.createLinearGradient(0, 0, 0, 300);
+            gradientRev.addColorStop(0, 'rgba(2, 132, 199, 0.35)');
+            gradientRev.addColorStop(1, 'rgba(2, 132, 199, 0.0)');
+
+            revenueChart = new Chart(ctxRev, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt'],
+                    datasets: [
+                        {
+                            label: 'Pendapatan (Rp)',
+                            data: [28000000, 32000000, 31000000, 39000000, 42000000, 45000000, 41000000, 49000000, 52000000, 58000000],
+                            borderColor: '#0284c7',
+                            backgroundColor: gradientRev,
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: 'Profit Bersih (Rp)',
+                            data: [16000000, 19000000, 18000000, 23000000, 25000000, 27000000, 24000000, 29000000, 31000000, 34800000],
+                            borderColor: '#10b981',
+                            borderDash: [5, 5],
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'top', labels: { boxWidth: 12, font: { family: 'Plus Jakarta Sans', size: 11 } } }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: '#f1f5f9' },
+                            ticks: {
+                                font: { size: 10 },
+                                callback: function(value) { return 'Rp ' + (value / 1000000) + ' Jt'; }
+                            }
+                        },
+                        x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                    }
+                }
+            });
+
+            // Order Status Doughnut Chart
+            const ctxStatus = document.getElementById('orderStatusChart').getContext('2d');
+            new Chart(ctxStatus, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Selesai', 'Proses Cuci', 'Setrika', 'Dalam Pengiriman'],
+                    datasets: [{
+                        data: [62, 18, 12, 8],
+                        backgroundColor: ['#10b981', '#0284c7', '#f59e0b', '#6366f1'],
+                        borderWidth: 0,
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    cutout: '72%'
+                }
+            });
+        }
+
+        function updateRevenueChart(type) {
+            const btnB = document.getElementById('btnChartBulanan');
+            const btnM = document.getElementById('btnChartMingguan');
+
+            if (type === 'bulanan') {
+                btnB.className = "px-3 py-1 bg-brand-50 text-brand-700 text-xs font-bold rounded-lg border border-brand-200";
+                btnM.className = "px-3 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded-lg hover:bg-slate-200";
+                revenueChart.data.labels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt'];
+                revenueChart.data.datasets[0].data = [28000000, 32000000, 31000000, 39000000, 42000000, 45000000, 41000000, 49000000, 52000000, 58000000];
+            } else {
+                btnM.className = "px-3 py-1 bg-brand-50 text-brand-700 text-xs font-bold rounded-lg border border-brand-200";
+                btnB.className = "px-3 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded-lg hover:bg-slate-200";
+                revenueChart.data.labels = ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4'];
+                revenueChart.data.datasets[0].data = [12000000, 14500000, 15000000, 16500000];
+            }
+            revenueChart.update();
+        }
+
+        window.onload = function() {
+            initCharts();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+import { MessageCircle, UserRound } from "lucide-react";
+import { Link } from "react-router-dom";
+import type { RecentCustomer } from "../../types/dashboard";
+import { formatDate } from "../../utils/format";
+
+type Props={data:RecentCustomer[]};
+export default function RecentCustomers({data}:Props){return <div className="min-w-0"><div className="space-y-2.5">{data.length===0?<p className="py-8 text-center text-sm text-slate-400">Belum ada pelanggan</p>:data.map((customer)=><div key={customer.id} className="flex items-center justify-between gap-3 rounded-xl p-2.5 transition-colors hover:bg-slate-50"><div className="flex min-w-0 items-center gap-3"><div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-sky-50 text-sky-600"><UserRound size={16}/></div><div className="min-w-0"><p className="truncate text-xs font-bold text-slate-800">{customer.name}</p><p className="truncate text-[10px] text-slate-400">{customer.phone||"Tidak ada nomor"}</p></div></div><div className="shrink-0 text-right"><span className="rounded bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-700">Customer</span><p className="mt-1 text-[9px] text-slate-400">{formatDate(customer.createdAt)}</p><Link to={`/customers`} className="mt-1 inline-flex text-sky-600 hover:text-sky-700" title="Buka customers"><MessageCircle size={12}/></Link></div></div>)}</div><div className="mt-3 border-t border-slate-100 pt-3 text-right"><Link to="/customers" className="text-xs font-bold text-sky-700 hover:underline">Lihat Semua Customers →</Link></div></div>}

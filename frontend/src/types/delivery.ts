@@ -1,0 +1,8 @@
+export type DeliveryType = "PICKUP" | "DELIVERY";
+export type DeliveryStatus = "REQUESTED" | "ASSIGNED" | "ON_THE_WAY" | "PICKED_UP" | "DELIVERING" | "DELIVERED" | "CANCELLED";
+export type DeliveryCustomer = { id:string; customerCode:string; name:string; phone:string };
+export type DeliveryOrderItem = { id:string; quantity:number; priceSnapshot:number; subtotal:number; service?:{id:string;name:string;unit:string;price:number} };
+export type DeliveryOrder = { id:string; orderCode:string; status:string; paymentStatus:string; subtotal:number; discount:number; total:number; customer?:DeliveryCustomer|null; items:DeliveryOrderItem[] };
+export type Delivery = { id:string; orderId:string; courierName?:string|null; courierPhone?:string|null; vehicleType?:string|null; vehicleNumber?:string|null; type:DeliveryType; status:DeliveryStatus; recipientName:string; recipientPhone:string; address:string; latitude?:number|string|null; longitude?:number|string|null; scheduledAt?:string|null; assignedAt?:string|null; startedAt?:string|null; pickedUpAt?:string|null; deliveredAt?:string|null; cancelledAt?:string|null; statusHistory?:{status:DeliveryStatus;changedAt:string;changedBy?:string}[]|null; notes?:string|null; createdAt:string; updatedAt:string; order?:DeliveryOrder|null };
+export type CreateDeliveryPayload = { orderId:string; type:DeliveryType; recipientName?:string; recipientPhone?:string; address?:string; latitude?:number; longitude?:number; scheduledAt?:string; notes?:string };
+export type AssignCourierPayload = { courierName?:string; courierPhone?:string; vehicleType?:string; vehicleNumber?:string };

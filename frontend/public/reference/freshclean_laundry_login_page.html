@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreshClean Laundry - Masuk & Daftar</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0284c7', // primary cyan/blue
+                            600: '#0369a1',
+                            700: '#075985',
+                            800: '#0c4a6e',
+                            900: '#0f172a', // deep navy
+                        },
+                        mint: {
+                            400: '#34d399',
+                            500: '#10b981',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        /* Hero Image Container Parallax Background */
+        .hero-bg {
+            background-image: linear-gradient(135deg, rgba(12, 74, 110, 0.85) 0%, rgba(3, 105, 161, 0.75) 100%), 
+                              url('https://images.unsplash.com/photo-1545173168-9f1947eebb7f?q=80&w=1600&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Glassmorphism elements */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .glass-badge {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        /* Floating Bubbles Animation */
+        .bubble-container {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .bubble {
+            position: absolute;
+            bottom: -80px;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(56, 189, 248, 0.25));
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.8), 0 8px 24px rgba(14, 116, 144, 0.15);
+            animation: rise 10s infinite cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes rise {
+            0% {
+                transform: translateY(0) scale(0.7) rotate(0deg);
+                opacity: 0;
+            }
+            15% {
+                opacity: 0.8;
+            }
+            85% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(-110vh) scale(1.2) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Ripple effect for interactive buttons */
+        .btn-ripple {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-ripple::after {
+            content: '';
+            display: block;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            background-image: radial-gradient(circle, rgba(255, 255, 255, 0.4) 10%, transparent 10.01%);
+            background-repeat: no-repeat;
+            background-position: 50%;
+            transform: scale(10, 10);
+            opacity: 0;
+            transition: transform 0.5s, opacity 0.8s;
+        }
+
+        .btn-ripple:active::after {
+            transform: scale(0, 0);
+            opacity: 0.3;
+            transition: 0s;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-3 sm:p-6 lg:p-8 bg-slate-100 relative">
+
+    <div class="bubble-container" id="bubbleContainer"></div>
+
+    <!-- Main Card Shell -->
+    <div class="relative z-20 w-full max-w-6xl glass-panel rounded-3xl shadow-2xl overflow-hidden flex flex-col lg:flex-row min-h-[680px]">
+        
+        <div class="lg:w-1/2 hero-bg p-8 lg:p-12 text-white flex flex-col justify-between relative min-h-[320px] lg:min-h-full">
+            
+            <!-- Top Branding Header -->
+            <div class="flex items-center justify-between relative z-20">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30 shadow-inner">
+                        <i class="fa-solid fa-soap text-xl text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold tracking-tight text-white leading-tight">FreshClean</h1>
+                        <p class="text-[10px] text-brand-200 font-semibold tracking-widest uppercase">Smart Laundry App</p>
+                    </div>
+                </div>
+                
+                <span class="glass-badge px-3 py-1 rounded-full text-xs font-medium text-brand-100 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-mint-400 animate-pulse"></span> Service Active
+                </span>
+            </div>
+
+            <!-- Middle Features Carousel/Showcase -->
+            <div class="my-8 lg:my-auto relative z-20 max-w-md">
+                <div id="slideContent" class="transition-all duration-500 transform">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-brand-500/30 text-brand-200 border border-brand-400/30 text-xs font-semibold mb-4">
+                        <i class="fa-solid fa-sparkles text-amber-300"></i>
+                        <span id="slideTag">Layanan Tercepat & Higienis</span>
+                    </div>
+                    <h2 id="slideTitle" class="text-2xl sm:text-3xl font-extrabold text-white leading-snug mb-3">
+                        Pakaian Bersih, Harum & Rapi Tanpa Ribet
+                    </h2>
+                    <p id="slideDesc" class="text-sm text-brand-100 leading-relaxed font-light">
+                        Lacak status cucian secara real-time dari pencucian, pengeringan, setrika, hingga pengantaran gratis langsung ke pintu Anda.
+                    </p>
+                </div>
+
+                <!-- Carousel Controls -->
+                <div class="flex items-center gap-2 mt-6" id="carouselIndicators">
+                    <button onclick="changeSlide(0)" class="w-8 h-2 rounded-full bg-white transition-all duration-300"></button>
+                    <button onclick="changeSlide(1)" class="w-2 h-2 rounded-full bg-white/40 hover:bg-white/70 transition-all duration-300"></button>
+                    <button onclick="changeSlide(2)" class="w-2 h-2 rounded-full bg-white/40 hover:bg-white/70 transition-all duration-300"></button>
+                </div>
+            </div>
+
+            <!-- Bottom Stats / Features Footer -->
+            <div class="pt-6 border-t border-white/15 grid grid-cols-3 gap-2 text-center relative z-20">
+                <div class="p-2 rounded-xl bg-white/5 backdrop-blur-xs">
+                    <p class="text-lg font-bold text-white">24 Jam</p>
+                    <p class="text-[11px] text-brand-200">Layanan Kilat</p>
+                </div>
+                <div class="p-2 rounded-xl bg-white/5 backdrop-blur-xs">
+                    <p class="text-lg font-bold text-white">100%</p>
+                    <p class="text-[11px] text-brand-200">Deterjen Anti-Bakteri</p>
+                </div>
+                <div class="p-2 rounded-xl bg-white/5 backdrop-blur-xs">
+                    <p class="text-lg font-bold text-white">Gratis</p>
+                    <p class="text-[11px] text-brand-200">Antar Jemput*</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:w-1/2 p-6 sm:p-10 lg:p-12 flex flex-col justify-center bg-white/90">
+            
+            <!-- Navigation Switch (Masuk / Daftar) -->
+            <div class="bg-slate-100 p-1.5 rounded-2xl mb-6 flex border border-slate-200 max-w-sm mx-auto w-full">
+                <button id="tabMasukBtn" onclick="switchAuthTab('masuk')" class="flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all duration-300 bg-white text-brand-700 shadow-sm">
+                    <i class="fa-solid fa-right-to-bracket mr-1.5"></i> Masuk
+                </button>
+                <button id="tabDaftarBtn" onclick="switchAuthTab('daftar')" class="flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all duration-300 text-slate-500 hover:text-slate-800">
+                    <i class="fa-solid fa-user-plus mr-1.5"></i> Daftar Baru
+                </button>
+            </div>
+
+            <!-- LOGIN FORM -->
+            <div id="formMasuk" class="transition-all duration-300 block">
+                <div class="mb-6 text-center sm:text-left">
+                    <h3 class="text-2xl font-bold text-slate-800">Selamat Datang Kembali! 👋</h3>
+                    <p class="text-xs sm:text-sm text-slate-500 mt-1">Masukkan kredensial Anda untuk memantau cucian Anda.</p>
+                </div>
+
+                <!-- Role Selection Toggle -->
+                <div class="mb-5">
+                    <label class="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-2">Login Sebagai</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" onclick="setRole('pelanggan')" id="rolePelangganBtn" class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all border-brand-500 bg-brand-50 text-brand-700 shadow-xs">
+                            <i class="fa-solid fa-user"></i>
+                            <span>Pelanggan</span>
+                        </button>
+                        <button type="button" onclick="setRole('admin')" id="roleAdminBtn" class="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100">
+                            <i class="fa-solid fa-user-gear"></i>
+                            <span>Petugas / Admin</span>
+                        </button>
+                    </div>
+                </div>
+
+                <form onsubmit="handleLoginSubmit(event)" class="space-y-4">
+                    <!-- Email / Phone Input -->
+                    <div>
+                        <label class="block text-[11px] font-extrabold text-slate-600 uppercase tracking-wider mb-1.5">Email atau Nomor Whatsapp</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                <i class="fa-regular fa-envelope text-sm"></i>
+                            </div>
+                            <input type="text" id="loginEmail" required placeholder="nama@email.com atau 0812xxx" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all">
+                        </div>
+                    </div>
+
+                    <!-- Password Input -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="block text-[11px] font-extrabold text-slate-600 uppercase tracking-wider">Kata Sandi</label>
+                            <button type="button" onclick="openForgotPasswordModal()" class="text-xs font-bold text-brand-600 hover:text-brand-700 transition-colors">Lupa Kata Sandi?</button>
+                        </div>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                <i class="fa-solid fa-lock text-sm"></i>
+                            </div>
+                            <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all">
+                            <button type="button" onclick="togglePasswordVisibility('loginPassword', 'loginEyeIcon')" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none">
+                                <i id="loginEyeIcon" class="fa-regular fa-eye text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Remember Me Option -->
+                    <div class="flex items-center justify-between pt-1">
+                        <label class="flex items-center gap-2.5 cursor-pointer">
+                            <input type="checkbox" id="rememberMe" class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 border-slate-300">
+                            <span class="text-xs font-medium text-slate-600">Ingat saya selama 30 hari</span>
+                        </label>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" id="loginBtn" class="btn-ripple w-full py-3.5 px-4 bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-700 hover:to-brand-600 text-white text-sm font-bold rounded-xl shadow-lg shadow-brand-500/25 transition-all duration-300 flex items-center justify-center gap-2 mt-2">
+                        <span>Masuk ke Akun</span>
+                        <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </button>
+                </form>
+
+                <!-- Divider & Social Login Options -->
+                <div class="relative my-6">
+                    <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-200"></div></div>
+                    <div class="relative flex justify-center text-[11px] uppercase"><span class="bg-white px-3 text-slate-400 font-bold tracking-wider">Atau Masuk Dengan</span></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button type="button" onclick="handleSocialLogin('Google')" class="flex items-center justify-center gap-2 py-2.5 px-4 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-2xs">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                        </svg>
+                        <span>Google</span>
+                    </button>
+                    <button type="button" onclick="handleSocialLogin('WhatsApp OTP')" class="flex items-center justify-center gap-2 py-2.5 px-4 bg-emerald-500 hover:bg-emerald-600 border border-emerald-500 rounded-xl text-xs font-bold text-white transition-all shadow-2xs">
+                        <i class="fa-brands fa-whatsapp text-sm"></i>
+                        <span>WhatsApp OTP</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- REGISTER FORM -->
+            <div id="formDaftar" class="transition-all duration-300 hidden">
+                <div class="mb-4 text-center sm:text-left">
+                    <h3 class="text-2xl font-bold text-slate-800">Buat Akun Baru ✨</h3>
+                    <p class="text-xs sm:text-sm text-slate-500 mt-1">Daftar sekarang dan nikmati kemudahan antar-jemput cucian.</p>
+                </div>
+
+                <form onsubmit="handleRegisterSubmit(event)" class="space-y-3">
+                    <!-- Full Name -->
+                    <div>
+                        <label class="block text-[11px] font-extrabold text-slate-600 uppercase tracking-wider mb-1">Nama Lengkap</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                <i class="fa-regular fa-user text-sm"></i>
+                            </div>
+                            <input type="text" id="regName" required placeholder="Budi Santoso" class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all">
+                        </div>
+                    </div>
+
+                    <!-- Email & Phone Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-extrabold text-slate-600 uppercase tracking-wider mb-1">Nomor WhatsApp</label>
+                            <input type="tel" id="regPhone" required placeholder="08123456789" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold text-slate-600 uppercase tracking-wider mb-1">Alamat Email</label>
+                            <input type="email" id="regEmail" required placeholder="budi@email.com" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all">
+                        </div>
+                    </div>
+
+                    <!-- Passwords Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-extrabold text-slate-600 uppercase tracking-wider mb-1">Kata Sandi</label>
+                            <div class="relative">
+                                <input type="password" id="regPassword" required placeholder="••••••••" class="w-full pl-3.5 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all">
+                                <button type="button" onclick="togglePasswordVisibility('regPassword', 'regEyeIcon')" class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400">
+                                    <i id="regEyeIcon" class="fa-regular fa-eye text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-extrabold text-slate-600 uppercase tracking-wider mb-1">Konfirmasi Sandi</label>
+                            <input type="password" id="regPasswordConfirm" required placeholder="••••••••" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all">
+                        </div>
+                    </div>
+
+                    <!-- Terms checkbox -->
+                    <div class="pt-1">
+                        <label class="flex items-start gap-2 cursor-pointer">
+                            <input type="checkbox" required class="w-4 h-4 mt-0.5 rounded text-brand-600 focus:ring-brand-500 border-slate-300">
+                            <span class="text-xs text-slate-600">Saya menyetujui <a href="#" class="text-brand-600 underline font-semibold">Syarat & Ketentuan</a> serta <a href="#" class="text-brand-600 underline font-semibold">Kebijakan Privasi</a>.</span>
+                        </label>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" id="regBtn" class="btn-ripple w-full py-3.5 px-4 bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-700 hover:to-brand-600 text-white text-sm font-bold rounded-xl shadow-lg shadow-brand-500/25 transition-all duration-300 flex items-center justify-center gap-2 mt-2">
+                        <span>Selesaikan Pendaftaran</span>
+                        <i class="fa-solid fa-check text-xs"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgotModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative">
+            <button onclick="closeForgotPasswordModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-sm">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="text-center mb-5">
+                <div class="w-12 h-12 bg-brand-100 text-brand-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-xl">
+                    <i class="fa-solid fa-key"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800">Lupa Kata Sandi?</h3>
+                <p class="text-xs text-slate-500 mt-1">Masukkan email terdaftar Anda. Kami akan mengirimkan tautan untuk mengatur ulang kata sandi Anda.</p>
+            </div>
+            <form onsubmit="handleForgotPasswordSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-[11px] font-extrabold text-slate-600 uppercase tracking-wider mb-1">Email Terdaftar</label>
+                    <input type="email" id="resetEmail" required placeholder="nama@email.com" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-xl transition-all shadow-md">
+                    Kirim Tautan Atur Ulang
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Bubble Generator ---
+        function generateBubbles() {
+            const container = document.getElementById('bubbleContainer');
+            const count = 14;
+
+            for (let i = 0; i < count; i++) {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                
+                const size = Math.random() * 55 + 20; // Size between 20px - 75px
+                const left = Math.random() * 100; // Position percentage
+                const duration = Math.random() * 8 + 7; // Speed: 7s - 15s
+                const delay = Math.random() * 6; // Staggered start
+
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.left = `${left}%`;
+                bubble.style.animationDuration = `${duration}s`;
+                bubble.style.animationDelay = `${delay}s`;
+
+                container.appendChild(bubble);
+            }
+        }
+
+        // --- 2. Interactive Features Carousel ---
+        const slidesData = [
+            {
+                tag: "Layanan Tercepat & Higienis",
+                title: "Pakaian Bersih, Harum & Rapi Tanpa Ribet",
+                desc: "Lacak status cucian secara real-time dari pencucian, pengeringan, setrika, hingga pengantaran gratis langsung ke pintu Anda."
+            },
+            {
+                tag: "Garansi Kepuasan 100%",
+                title: "Perawatan Khusus Bahan & Kain Pilihan",
+                desc: "Deterjen khusus anti-bakteri dan pelembut premium menjaga warna pakaian tetap cemerlang dan serat kain tetap awet."
+            },
+            {
+                tag: "Antar-Jemput Gratis",
+                title: "Jadwalkan Penjemputan Sesuai Waktu Anda",
+                desc: "Kurir siap mengambil cucian kotor langsung di rumah, apartemen, atau kantor Anda tanpa biaya tambahan."
+            }
+        ];
+
+        let currentSlide = 0;
+
+        function changeSlide(index) {
+            currentSlide = index;
+            const content = document.getElementById('slideContent');
+            
+            content.style.opacity = '0';
+            content.style.transform = 'translateY(10px)';
+
+            setTimeout(() => {
+                document.getElementById('slideTag').innerText = slidesData[index].tag;
+                document.getElementById('slideTitle').innerText = slidesData[index].title;
+                document.getElementById('slideDesc').innerText = slidesData[index].desc;
+                
+                content.style.opacity = '1';
+                content.style.transform = 'translateY(0)';
+            }, 250);
+
+            // Update indicators
+            const buttons = document.querySelectorAll('#carouselIndicators button');
+            buttons.forEach((btn, idx) => {
+                if (idx === index) {
+                    btn.className = "w-8 h-2 rounded-full bg-white transition-all duration-300";
+                } else {
+                    btn.className = "w-2 h-2 rounded-full bg-white/40 hover:bg-white/70 transition-all duration-300";
+                }
+            });
+        }
+
+        setInterval(() => {
+            currentSlide = (currentSlide + 1) % slidesData.length;
+            changeSlide(currentSlide);
+        }, 5000);
+
+        // --- 3. Auth Tab Switcher ---
+        function switchAuthTab(tab) {
+            const btnMasuk = document.getElementById('tabMasukBtn');
+            const btnDaftar = document.getElementById('tabDaftarBtn');
+            const formMasuk = document.getElementById('formMasuk');
+            const formDaftar = document.getElementById('formDaftar');
+
+            if (tab === 'masuk') {
+                btnMasuk.className = "flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all duration-300 bg-white text-brand-700 shadow-sm";
+                btnDaftar.className = "flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all duration-300 text-slate-500 hover:text-slate-800";
+                
+                formMasuk.classList.remove('hidden');
+                formDaftar.classList.add('hidden');
+            } else {
+                btnDaftar.className = "flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all duration-300 bg-white text-brand-700 shadow-sm";
+                btnMasuk.className = "flex-1 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all duration-300 text-slate-500 hover:text-slate-800";
+                
+                formDaftar.classList.remove('hidden');
+                formMasuk.classList.add('hidden');
+            }
+        }
+
+        // --- 4. Role Toggle Switch ---
+        let selectedRole = 'pelanggan';
+
+        function setRole(role) {
+            selectedRole = role;
+            const pelangganBtn = document.getElementById('rolePelangganBtn');
+            const adminBtn = document.getElementById('roleAdminBtn');
+
+            if (role === 'pelanggan') {
+                pelangganBtn.className = "flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all border-brand-500 bg-brand-50 text-brand-700 shadow-xs";
+                adminBtn.className = "flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100";
+            } else {
+                adminBtn.className = "flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all border-brand-500 bg-brand-50 text-brand-700 shadow-xs";
+                pelangganBtn.className = "flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border text-xs font-bold transition-all border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100";
+            }
+        }
+
+        // --- 5. Password Eye Toggle ---
+        function togglePasswordVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fa-regular fa-eye-slash text-sm';
+            } else {
+                input.type = 'password';
+                icon.className = 'fa-regular fa-eye text-sm';
+            }
+        }
+
+        // --- 6. Toast Notification Helper ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            const isSuccess = type === 'success';
+            const bgStyle = isSuccess ? 'bg-slate-900 border-mint-400' : 'bg-red-900 border-red-500';
+            const iconStyle = isSuccess ? 'fa-circle-check text-mint-400' : 'fa-circle-exclamation text-red-400';
+
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl text-white text-xs font-semibold shadow-2xl border-l-4 ${bgStyle} transform transition-all duration-300 translate-y-[-10px] opacity-0 max-w-sm`;
+            toast.innerHTML = `
+                <i class="fa-solid ${iconStyle} text-base"></i>
+                <span class="flex-1">${message}</span>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-[-10px]', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-[-10px]', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // --- 7. Modal Handlers ---
+        function openForgotPasswordModal() {
+            document.getElementById('forgotModal').classList.remove('hidden');
+        }
+
+        function closeForgotPasswordModal() {
+            document.getElementById('forgotModal').classList.add('hidden');
+        }
+
+        function handleForgotPasswordSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('resetEmail').value;
+            closeForgotPasswordModal();
+            showToast(`Instruksi pemulihan telah dikirim ke ${email}`, 'success');
+        }
+
+        // --- 8. Form Submission Simulators ---
+        function handleLoginSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const email = document.getElementById('loginEmail').value;
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>Memproses...</span>`;
+
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = `<span>Masuk ke Akun</span> <i class="fa-solid fa-arrow-right text-xs"></i>`;
+                
+                showToast(`Berhasil masuk sebagai ${selectedRole.toUpperCase()}! Mengalihkan...`, 'success');
+            }, 1200);
+        }
+
+        function handleRegisterSubmit(e) {
+            e.preventDefault();
+            const pass = document.getElementById('regPassword').value;
+            const passConfirm = document.getElementById('regPasswordConfirm').value;
+
+            if (pass !== passConfirm) {
+                showToast("Konfirmasi kata sandi tidak cocok!", "error");
+                return;
+            }
+
+            const btn = document.getElementById('regBtn');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>Mendaftarkan...</span>`;
+
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = `<span>Selesaikan Pendaftaran</span> <i class="fa-solid fa-check text-xs"></i>`;
+                
+                showToast("Pendaftaran berhasil! Silakan masuk ke akun Anda.", 'success');
+                switchAuthTab('masuk');
+            }, 1200);
+        }
+
+        function handleSocialLogin(provider) {
+            showToast(`Menghubungkan ke ${provider}...`, 'success');
+        }
+
+        // On Load initialization
+        window.onload = function() {
+            generateBubbles();
+        };
+    </script>
+</body>
+</html>
