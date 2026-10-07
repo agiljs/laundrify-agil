@@ -1,6 +1,6 @@
 import { prisma } from "../lib/prisma.js";
 import { Prisma } from "../generated/prisma/client.js";
-import { assignCourier, createDelivery, findDeliveries, findDeliveryById, updateDeliveryStatus } from "../repositories/delivery.repository.js";
+import { assignCourier as assignCourierRecord, createDelivery, findDeliveries, findDeliveryById, updateDeliveryStatus } from "../repositories/delivery.repository.js";
 
 type DeliveryStatus = "REQUESTED" | "ASSIGNED" | "ON_THE_WAY" | "PICKED_UP" | "DELIVERING" | "DELIVERED" | "CANCELLED";
 
@@ -72,7 +72,7 @@ export async function assignCourier(id: string, data: { courierName?: string; co
     changedBy: changedById,
   });
 
-  return assignCourier(id, { ...data, statusHistory: history });
+  return assignCourierRecord(id, { ...data, statusHistory: history });
 }
 
 export async function changeDeliveryStatus(id: string, status: DeliveryStatus, changedById: string) {

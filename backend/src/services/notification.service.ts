@@ -1,5 +1,7 @@
 import type { NotificationType, UserRole } from "../generated/prisma/client.js";
 
+import { prisma } from "../lib/prisma.js";
+import { emitNotification } from "../websocket/events.js";
 import {
   findNotificationsByUserId,
   findNotificationById,
@@ -16,7 +18,9 @@ export async function createNewNotification(data: {
   message: string;
   type: NotificationType;
 }) {
-  return createNotification(data);
+  const created = await createNotification(data);
+  emitNotification(created.userId, created);
+  return created;
 }
 
 export async function notifyRole(data: {
@@ -26,7 +30,7 @@ export async function notifyRole(data: {
   type: NotificationType;
   excludeUserId?: string;
 }) {
-  return createNotificationsForRole(
+  const created = await createNotificationsForRole(
     data.role,
     {
       title: data.title,
@@ -35,6 +39,30 @@ export async function notifyRole(data: {
     },
     data.excludeUserId,
   );
+
+  for (const item of created) emitNotification(item.userId, item);
+  return created;
+}
+
+/** Kirim notifikasi ke akun login milik seorang customer (bila customer punya akun). */
+export async function notifyCustomer(data: {
+  customerId: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+}) {
+  const customer = await prisma.customer.findUnique({
+    where: { id: data.customerId },
+    select: { userId: true },
+  });
+  if (!customer?.userId) return null;
+
+  return createNewNotification({
+    userId: customer.userId,
+    title: data.title,
+    message: data.message,
+    type: data.type,
+  });
 }
 
 export async function getMyNotifications(userId: string) {

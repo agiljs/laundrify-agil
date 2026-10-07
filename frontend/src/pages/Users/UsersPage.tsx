@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useRealtime } from "../../hooks/useRealtime";
 import { AlertCircle, ChevronLeft, ChevronRight, Eye, KeyRound, Loader2, Pencil, Plus, RefreshCw, Search, UserCog } from "lucide-react";
 import { getUsers } from "../../services/user.service";
 import Toast, { type ToastType } from "../../components/ui/Toast";
@@ -12,10 +13,13 @@ const roleLabel:Record<UserRole,string>={ADMIN:"Administrator",STAFF:"Staff",CUS
 function errMsg(e:unknown){return (e as {response?:{data?:{message?:string}}}).response?.data?.message??"Data user tidak dapat dimuat.";}
 function statusClass(s:UserStatus){return s==="ACTIVE"?"bg-emerald-50 text-emerald-700":"bg-slate-100 text-slate-600";}
 
+const USER_EVENTS = ["data:changed:users"] as const;
+
 export default function UsersPage(){
  const [users,setUsers]=useState<User[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(""),[toast,setToast]=useState<{type:ToastType;title:string;message:string}|null>(null),[search,setSearch]=useState(""),[role,setRole]=useState<"ALL"|UserRole>("ALL"),[status,setStatus]=useState<"ALL"|UserStatus>("ALL"),[page,setPage]=useState(1),[selected,setSelected]=useState<User|null>(null),[formOpen,setFormOpen]=useState(false),[editing,setEditing]=useState<User|null>(null),[passwordUser,setPasswordUser]=useState<User|null>(null);
- async function load(){try{setLoading(true);setError("");setUsers(await getUsers());}catch(e){console.error(e);setError(errMsg(e));}finally{setLoading(false);}}
- useEffect(()=>{void load();},[]); useEffect(()=>setPage(1),[search,role,status]);
+ async function load(silent = false){try{if(!silent)setLoading(true);setError("");setUsers(await getUsers());}catch(e){console.error(e);setError(errMsg(e));}finally{setLoading(false);}}
+ useEffect(()=>{void load();},[]);
+  useRealtime(USER_EVENTS, () => void load(true)); useEffect(()=>setPage(1),[search,role,status]);
  const filtered=useMemo(()=>{const q=search.trim().toLowerCase();return users.filter(u=>(!q||[u.name,u.email,u.phone??""].some(v=>v.toLowerCase().includes(q)))&&(role==="ALL"||u.role===role)&&(status==="ALL"||u.status===status));},[users,search,role,status]);
  const totalPages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE)),safe=Math.min(page,totalPages),rows=filtered.slice((safe-1)*PAGE_SIZE,safe*PAGE_SIZE);
  function saved(u:User){const existing=users.some(v=>v.id===u.id);setUsers(x=>existing?x.map(v=>v.id===u.id?u:v):[u,...x]);setSelected(u);setToast({type:"success",title:existing?"User diperbarui":"Customer ditambahkan",message:existing?"Perubahan akun berhasil disimpan.":"Akun berhasil dibuat."});}

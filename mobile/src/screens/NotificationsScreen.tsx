@@ -9,6 +9,7 @@ import { colors } from "../theme/colors";
 import { useAuth } from "../context/AuthContext";
 import { useFeedback } from "../providers/FeedbackProvider";
 import { getMyNotifications, markAllNotificationsRead, markNotificationRead, type NotificationItem } from "../services/notification.service";
+import { useRealtime } from "../hooks/useRealtime";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Notifications">;
 
@@ -18,6 +19,8 @@ const typeIcon: Record<string, keyof typeof Ionicons.glyphMap> = {
   ERROR: "close-circle",
   INFO: "information-circle",
 };
+
+const NOTIFICATION_EVENTS = ["notification:new"] as const;
 
 export default function NotificationsScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
@@ -40,6 +43,8 @@ export default function NotificationsScreen({ navigation }: Props) {
   }, [isAdmin, showError]);
 
   useFocusEffect(useCallback(() => { void load(); }, [load]));
+
+  useRealtime(NOTIFICATION_EVENTS, () => void load());
 
   async function readOne(item: NotificationItem) {
     if (item.isRead) return;

@@ -8,7 +8,8 @@ import {
 } from "../repositories/order.repository.js";
 
 import { useInventoryForOrder } from "./inventory-usage.service.js";
-import { notifyRole } from "./notification.service.js";
+import { notifyCustomer, notifyRole } from "./notification.service.js";
+import { emitOrderEvent } from "../websocket/events.js";
 
 import { Service } from "../generated/prisma/client.js";
 import { Prisma } from "../generated/prisma/client.js";
@@ -174,6 +175,8 @@ export async function createNewOrder(
     excludeUserId: createdById,
   });
 
+  emitOrderEvent("created", order);
+
   return order;
 }
 
@@ -202,13 +205,23 @@ const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
   CANCELLED: [],
 };
 
+const STATUS_LABEL: Record<OrderStatus, string> = {
+  RECEIVED: "Diterima",
+  WASHING: "Dicuci",
+  DRYING: "Dikeringkan",
+  IRONING: "Disetrika",
+  READY: "Siap Diambil",
+  COMPLETED: "Selesai",
+  CANCELLED: "Dibatalkan",
+};
+
 export async function changeOrderStatus(
   id: string,
   status: OrderStatus,
   changedById: string,
   note?: string,
 ) {
-  return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+  const updatedOrder = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const order = await tx.order.findUnique({
       where: {
         id,
@@ -317,6 +330,18 @@ export async function changeOrderStatus(
 
     return updatedOrder;
   });
+
+  // Efek samping dijalankan SETELAH transaksi commit supaya klien tidak menerima event untuk data yang belum tersimpan.
+  emitOrderEvent("status-updated", updatedOrder);
+
+  await notifyCustomer({
+    customerId: updatedOrder.customerId,
+    title: status === "CANCELLED" ? "Order dibatalkan" : "Status cucian diperbarui",
+    message: `Order ${updatedOrder.orderCode} sekarang berstatus ${STATUS_LABEL[status]}.`,
+    type: status === "CANCELLED" ? "WARNING" : status === "READY" || status === "COMPLETED" ? "SUCCESS" : "INFO",
+  });
+
+  return updatedOrder;
 }
 
 export async function updateExistingOrder(
@@ -329,7 +354,7 @@ export async function updateExistingOrder(
     note?: string | null;
   },
 ) {
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const order = await tx.order.findUnique({
       where: { id },
       include: { payments: true, items: true },
@@ -406,6 +431,9 @@ export async function updateExistingOrder(
     });
     return updated;
   });
+
+  emitOrderEvent("updated", result);
+  return result;
 }
 
 export async function removeOrder(id: string) {
@@ -428,5 +456,7 @@ export async function removeOrder(id: string) {
     throw new Error(
       "Order sudah memiliki transaksi inventory dan tidak dapat dihapus",
     );
-  return deleteOrder(id);
+  const deleted = await deleteOrder(id);
+  emitOrderEvent("deleted", order);
+  return deleted;
 }

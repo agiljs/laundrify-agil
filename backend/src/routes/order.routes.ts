@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { realtimeChange } from "../middlewares/realtimeChange.js";
 import {
   createOrderController,
   getMyOrdersController,
@@ -12,6 +13,7 @@ import { authenticate } from "../middlewares/authenticate.js";
 import { authorize } from "../middlewares/authorize.js";
 
 const router = Router();
+router.use(realtimeChange("orders"));
 router.use(authenticate);
 
 router.get("/", authorize("ADMIN", "STAFF"), getOrdersController);

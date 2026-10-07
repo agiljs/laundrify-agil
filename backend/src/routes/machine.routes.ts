@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { realtimeChange } from "../middlewares/realtimeChange.js";
 
 import {
   getMachinesController,
@@ -12,6 +13,7 @@ import { authenticate } from "../middlewares/authenticate.js";
 import { authorize } from "../middlewares/authorize.js";
 
 const router = Router();
+router.use(realtimeChange("machines"));
 
 router.use(authenticate);
 

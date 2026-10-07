@@ -45,7 +45,7 @@ export async function createNewUser(data: {
         name: data.name.trim(),
         email,
         passwordHash,
-        phone: data.phone.trim(),
+        phone: data.phone?.trim(),
         role: data.role,
         status: "ACTIVE",
       },

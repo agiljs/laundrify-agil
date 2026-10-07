@@ -1,5 +1,6 @@
 import { ArrowRight, CalendarDays, CheckCircle2, CircleDollarSign, PackageCheck, ShoppingBag, Users, WalletCards } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useRealtime } from "../../hooks/useRealtime";
 import { Link } from "react-router-dom";
 import RevenueChart from "../../components/dashboard/RevenueChart";
 import OrderStatusChart from "../../components/dashboard/OrderStatusChart";
@@ -9,10 +10,12 @@ import { formatCurrency } from "../../utils/format";
 import { getDashboardSummary, getDailyReport, getRecentCustomers, getRecentOrders } from "../../services/dashboard.service";
 import type { DashboardSummary, DailyReportItem, RecentCustomer, RecentOrder } from "../../types/dashboard";
 
+const DASHBOARD_EVENTS = ["order:created","order:updated","order:status-updated","order:deleted","payment:updated","data:changed:customers","data:changed:expenses"] as const;
+
 export default function DashboardPage() {
   const [summary,setSummary]=useState<DashboardSummary|null>(null); const [daily,setDaily]=useState<DailyReportItem[]>([]); const [customers,setCustomers]=useState<RecentCustomer[]>([]); const [orders,setOrders]=useState<RecentOrder[]>([]); const [loading,setLoading]=useState(true); const [error,setError]=useState(""); const [period,setPeriod]=useState("today");
   async function load(silent=false){try{if(!silent)setLoading(true);setError("");const now=new Date();let start=new Date(now),end=new Date(now);if(period==="week"){const day=now.getDay()||7;start.setDate(now.getDate()-day+1);}else if(period==="month"){start=new Date(now.getFullYear(),now.getMonth(),1);}start.setHours(0,0,0,0);end.setHours(23,59,59,999);const [s,d,c,o]=await Promise.all([getDashboardSummary(),getDailyReport(start.toISOString(),end.toISOString()),getRecentCustomers(6),getRecentOrders(6)]);setSummary(s);setDaily(d);setCustomers(c);setOrders(o);}catch(e){console.error(e);setError("Dashboard belum dapat dimuat. Pastikan server aktif.");}finally{setLoading(false);}}
-  useEffect(()=>{void load();},[period]);
+  useEffect(()=>{void load();},[period]); useRealtime(DASHBOARD_EVENTS,()=>void load(true));
   if(loading)return <div className="grid min-h-[70vh] place-items-center"><div className="text-center"><div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[#0284c7]"/><p className="mt-4 text-sm font-bold text-slate-500">Menyiapkan dashboard...</p></div></div>;
   if(error||!summary)return <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm font-semibold text-red-700">{error||"Data tidak tersedia"}</div>;
   const today=new Intl.DateTimeFormat("id-ID",{day:"numeric",month:"short"}).format(new Date());

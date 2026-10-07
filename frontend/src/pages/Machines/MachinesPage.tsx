@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useRealtime } from "../../hooks/useRealtime";
 import { AlertCircle, ChevronLeft, ChevronRight, Eye, Loader2, Pencil, Plus, RefreshCw, Search, WashingMachine } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { getMachines } from "../../services/machine.service";
@@ -12,12 +13,15 @@ const STATUS_LABEL: Record<MachineStatus, string> = { ACTIVE: "Aktif", MAINTENAN
 function statusClass(status: MachineStatus) { if (status === "ACTIVE") return "bg-emerald-100 text-emerald-700"; if (status === "BROKEN") return "bg-red-100 text-red-700"; if (status === "MAINTENANCE") return "bg-amber-100 text-amber-700"; return "bg-slate-100 text-slate-700"; }
 function errorMessage(error: unknown) { return (error as { response?: { data?: { message?: string } } }).response?.data?.message ?? "Data machine tidak dapat dimuat."; }
 
+const MACHINE_EVENTS = ["data:changed:machines"] as const;
+
 export default function MachinesPage() {
   const { user } = useAuth();
   const canEdit = user?.role === "ADMIN";
   const [machines, setMachines] = useState<Machine[]>([]); const [loading,setLoading]=useState(true); const [error,setError]=useState(""); const [search,setSearch]=useState(""); const [status,setStatus]=useState<"ALL"|MachineStatus>("ALL"); const [page,setPage]=useState(1); const [selected,setSelected]=useState<Machine|null>(null); const [formOpen,setFormOpen]=useState(false); const [editing,setEditing]=useState<Machine|null>(null);
-  async function load() { try { setLoading(true); setError(""); setMachines(await getMachines()); } catch(err) { console.error(err); setError(errorMessage(err)); } finally { setLoading(false); } }
-  useEffect(()=>{ void load(); },[]); useEffect(()=>{setPage(1)},[search,status]);
+  async function load(silent = false) { try { if(!silent)setLoading(true); setError(""); setMachines(await getMachines()); } catch(err) { console.error(err); setError(errorMessage(err)); } finally { setLoading(false); } }
+  useEffect(()=>{ void load(); },[]);
+  useRealtime(MACHINE_EVENTS, () => void load(true)); useEffect(()=>{setPage(1)},[search,status]);
   const filtered=useMemo(()=>{const q=search.trim().toLowerCase(); return machines.filter(m=>(!q||[m.machineCode,m.name,m.type,m.brand??"",m.model??"",m.serialNumber??"",m.location??""].some(v=>v.toLowerCase().includes(q)))&&(status==="ALL"||m.status===status));},[machines,search,status]);
   const totalPages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE)); const safePage=Math.min(page,totalPages); const rows=filtered.slice((safePage-1)*PAGE_SIZE,safePage*PAGE_SIZE);
   function handleSaved(machine:Machine){setMachines(current=>{const exists=current.some(x=>x.id===machine.id); return exists?current.map(x=>x.id===machine.id?machine:x):[machine,...current]}); setSelected(machine);}

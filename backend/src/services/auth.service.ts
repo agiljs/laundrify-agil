@@ -74,36 +74,8 @@ export async function loginWithGoogle(idToken: string) {
   });
 
   if (!user) {
-    const temporaryPassword = await bcrypt.hash(randomUUID(), 12);
-    const result = await prisma.$transaction(async (tx) => {
-      const createdUser = await tx.user.create({
-        data: {
-          name: payload.name?.trim() || email.split("@")[0],
-          email,
-          passwordHash: temporaryPassword,
-          googleId: payload.sub,
-          role: "CUSTOMER",
-          status: "ACTIVE",
-        },
-      });
-
-      const customer = await tx.customer.create({
-        data: {
-          customerCode: createCustomerCode(),
-          name: createdUser.name,
-          phone: `GOOGLE-${createdUser.id.slice(0, 12)}`,
-          email,
-          userId: createdUser.id,
-        },
-      });
-
-      return { createdUser, customer };
-    });
-
-    user = {
-      ...result.createdUser,
-      customerProfile: result.customer,
-    };
+    // Akun customer hanya berasal dari seed/admin; login Google tidak membuat akun baru.
+    throw new Error("Akun Google ini belum terdaftar di Laundrify");
   } else {
     if (user.status !== "ACTIVE") throw new Error("Akun tidak aktif");
 
@@ -119,45 +91,105 @@ export async function loginWithGoogle(idToken: string) {
   return finishLogin(user);
 }
 
+/** Error pendaftaran dengan kode, supaya aplikasi customer tahu field apa yang perlu ditampilkan. */
+export class RegistrationError extends Error {
+  constructor(
+    message: string,
+    public readonly code?: "CLAIM_CODE_REQUIRED" | "CLAIM_CODE_INVALID",
+  ) {
+    super(message);
+    this.name = "RegistrationError";
+  }
+}
+
+/** "+62 812-3456-789" / "62812..." / "812..." -> "0812..." */
+export function normalizePhone(raw: string) {
+  let digits = raw.replace(/\D/g, "");
+  if (digits.startsWith("62")) digits = `0${digits.slice(2)}`;
+  else if (digits.startsWith("8")) digits = `0${digits}`;
+  return digits;
+}
+
+function phoneVariants(normalized: string) {
+  const national = normalized.slice(1);
+  return [normalized, `62${national}`, `+62${national}`];
+}
+
 export async function registerCustomer(data: {
   name: string;
   email: string;
   password: string;
   phone: string;
   address?: string;
+  customerCode?: string;
 }) {
   const email = data.email.trim().toLowerCase();
-  const phone = data.phone.trim();
+  const phone = normalizePhone(data.phone);
+  if (!/^0\d{8,13}$/.test(phone)) throw new Error("Nomor telepon tidak valid. Contoh: 081234567890");
 
   const [existingUser, existingCustomer] = await Promise.all([
     prisma.user.findUnique({ where: { email } }),
-    prisma.customer.findUnique({ where: { phone } }),
+    prisma.customer.findFirst({ where: { phone: { in: phoneVariants(phone) } } }),
   ]);
 
   if (existingUser) throw new Error("Email sudah digunakan");
-  if (existingCustomer) throw new Error("Nomor telepon sudah digunakan");
+
+  /**
+   * Customer lama = data pelanggan yang dibuat admin/kasir TANPA akun login.
+   * Nomor telepon mereka sudah ada, jadi pendaftaran harus "menautkan" akun baru ke data lama
+   * (riwayat order tetap ikut). Karena belum ada verifikasi OTP, penautan wajib disertai Kode Customer
+   * (yang tercatat di sistem & hanya diketahui admin/pemilik), agar orang lain tidak bisa
+   * mengambil alih riwayat order seseorang hanya dengan mengetahui nomor HP-nya.
+   */
+  if (existingCustomer) {
+    if (existingCustomer.userId) throw new Error("Nomor telepon sudah digunakan oleh akun lain. Silakan masuk dengan akun tersebut.");
+    if (existingCustomer.deletedAt) throw new Error("Nomor telepon sudah digunakan. Silakan hubungi admin Laundrify.");
+
+    const code = data.customerCode?.trim().toUpperCase();
+    if (!code) {
+      throw new RegistrationError(
+        "Nomor ini sudah tercatat sebagai pelanggan Laundrify. Masukkan Kode Customer Anda (tanyakan ke kasir/admin) untuk menghubungkan riwayat order.",
+        "CLAIM_CODE_REQUIRED",
+      );
+    }
+    if (code !== existingCustomer.customerCode.toUpperCase()) {
+      throw new RegistrationError("Kode Customer tidak sesuai dengan nomor telepon ini.", "CLAIM_CODE_INVALID");
+    }
+  }
 
   const passwordHash = await bcrypt.hash(data.password, 12);
+  const name = data.name.trim();
 
   const result = await prisma.$transaction(async (tx) => {
     const user = await tx.user.create({
-      data: {
-        name: data.name.trim(), email, passwordHash, phone,
-        role: "CUSTOMER", status: "ACTIVE",
-      },
+      data: { name, email, passwordHash, phone, role: "CUSTOMER", status: "ACTIVE" },
     });
 
-    const customer = await tx.customer.create({
-      data: {
-        customerCode: createCustomerCode(), name: data.name.trim(), phone, email,
-        address: data.address?.trim() || undefined, userId: user.id,
-      },
-    });
+    const customer = existingCustomer
+      ? await tx.customer.update({
+          where: { id: existingCustomer.id },
+          data: {
+            userId: user.id,
+            email: existingCustomer.email ?? email,
+            address: existingCustomer.address ?? (data.address?.trim() || undefined),
+          },
+        })
+      : await tx.customer.create({
+          data: {
+            customerCode: createCustomerCode(),
+            name,
+            phone,
+            email,
+            address: data.address?.trim() || undefined,
+            userId: user.id,
+          },
+        });
 
-    return { user, customer };
+    return { user, customer, linkedExisting: Boolean(existingCustomer) };
   });
 
-  return finishLogin({ ...result.user, customerProfile: result.customer });
+  const login = await finishLogin({ ...result.user, customerProfile: result.customer });
+  return { ...login, linkedExisting: result.linkedExisting };
 }
 
 export async function getAuthenticatedUser(id: string) {

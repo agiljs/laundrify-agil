@@ -13,6 +13,7 @@ import SearchBar from "../components/SearchBar";
 import Pagination from "../components/Pagination";
 import { colors } from "../theme/colors";
 import { useFeedback } from "../providers/FeedbackProvider";
+import { useRealtime } from "../hooks/useRealtime";
 
 const PAGE_SIZE = 10;
 
@@ -33,6 +34,8 @@ const PAYMENT_OPTIONS = [
   { value: "PARTIAL", label: "Sebagian" },
   { value: "PAID", label: "Lunas" },
 ];
+
+const ORDER_EVENTS = ["order:created", "order:updated", "order:status-updated", "order:deleted", "payment:updated"] as const;
 
 export default function OrdersScreen({ navigation }: { navigation: NativeStackNavigationProp<RootStackParamList> }) {
   const { showSuccess, showError, confirm } = useFeedback();
@@ -57,6 +60,8 @@ export default function OrdersScreen({ navigation }: { navigation: NativeStackNa
   }, [showError]);
 
   useFocusEffect(useCallback(() => { void load(); }, [load]));
+
+  useRealtime(ORDER_EVENTS, () => void load());
 
   async function refresh() {
     setRefreshing(true);

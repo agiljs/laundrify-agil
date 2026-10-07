@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useRealtime } from "../../hooks/useRealtime";
 import { AlertCircle, ChevronLeft, ChevronRight, Eye, Loader2, Pencil, Plus, Receipt, RefreshCw, Search } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { getExpenses } from "../../services/expense.service";
@@ -16,6 +17,8 @@ const CATEGORIES: { value: ExpenseCategory; label: string }[] = [
 const labels = Object.fromEntries(CATEGORIES.map((item) => [item.value, item.label])) as Record<ExpenseCategory, string>;
 function getErrorMessage(error: unknown) { return (error as { response?: { data?: { message?: string } } }).response?.data?.message ?? "Data expense tidak dapat dimuat."; }
 
+const EXPENSE_EVENTS = ["data:changed:expenses"] as const;
+
 export default function ExpensesPage() {
   const { user } = useAuth();
   const canEdit = user?.role === "ADMIN";
@@ -29,12 +32,13 @@ export default function ExpensesPage() {
   const [editing, setEditing] = useState<Expense | null>(null);
   const [formOpen, setFormOpen] = useState(false);
 
-  async function load() {
-    try { setLoading(true); setError(""); setExpenses(await getExpenses()); }
+  async function load(silent = false) {
+    try { if(!silent)setLoading(true); setError(""); setExpenses(await getExpenses()); }
     catch (err) { console.error(err); setError(getErrorMessage(err)); }
     finally { setLoading(false); }
   }
   useEffect(() => { void load(); }, []);
+  useRealtime(EXPENSE_EVENTS, () => void load(true));
   useEffect(() => { setPage(1); }, [search, category]);
 
   const filtered = useMemo(() => {

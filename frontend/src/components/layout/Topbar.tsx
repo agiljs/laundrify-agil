@@ -14,6 +14,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../contexts/AuthContext";
+import { useRealtime } from "../../hooks/useRealtime";
 
 import {
   getNotifications,
@@ -21,6 +22,8 @@ import {
   markNotificationAsRead,
   type NotificationItem,
 } from "../../services/notificationService";
+
+const NOTIFICATION_EVENTS = ["notification:new"] as const;
 
 function formatNotificationDate(date: string) {
   return new Intl.DateTimeFormat("id-ID", {
@@ -119,6 +122,12 @@ export default function Topbar() {
       window.clearInterval(interval);
     };
   }, []);
+
+  /*
+   * Notifikasi baru masuk lewat WebSocket (real-time).
+   * Polling 30 detik di atas dipertahankan sebagai cadangan.
+   */
+  useRealtime(NOTIFICATION_EVENTS, () => void loadNotifications(), 100);
 
   /*
    * =====================================================

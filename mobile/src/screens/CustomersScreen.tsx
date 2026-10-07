@@ -10,6 +10,7 @@ import MetricCard from "../components/MetricCard";
 import SearchBar from "../components/SearchBar";
 import Pagination from "../components/Pagination";
 import { useFeedback } from "../providers/FeedbackProvider";
+import { useRealtime } from "../hooks/useRealtime";
 
 const PAGE_SIZE = 10;
 const MEMBERSHIP_OPTIONS = [
@@ -20,6 +21,8 @@ const MEMBERSHIP_OPTIONS = [
 
 type FormState = { name: string; phone: string; email: string; address: string };
 const EMPTY_FORM: FormState = { name: "", phone: "", email: "", address: "" };
+
+const CUSTOMER_EVENTS = ["data:changed:customers"] as const;
 
 export default function CustomersScreen() {
   const { showSuccess, showError, confirm } = useFeedback();
@@ -48,6 +51,8 @@ export default function CustomersScreen() {
   }, [showError]);
 
   useFocusEffect(useCallback(() => { void load(); }, [load]));
+
+  useRealtime(CUSTOMER_EVENTS, () => void load());
 
   async function refresh() { setRefreshing(true); await load(); setRefreshing(false); }
 

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useRealtime } from "../../hooks/useRealtime";
 import { Eye, History, Package, Pencil, Plus, RefreshCw, Search, XCircle } from "lucide-react";
 import type { InventoryItem, InventoryTransaction } from "../../types/inventory";
 import { getInventoryItems, getInventoryTransactions, updateInventoryItem } from "../../services/inventory.service";
@@ -10,13 +11,16 @@ import Toast, { type ToastType } from "../../components/ui/Toast";
 
 type ToastState={type:ToastType;title:string;message:string};
 
+const INVENTORY_EVENTS = ["data:changed:inventory"] as const;
+
 export default function InventoryPage(){
  const {user}=useAuth();
  const [items,setItems]=useState<InventoryItem[]>([]); const [loading,setLoading]=useState(true); const [search,setSearch]=useState("");
  const [status,setStatus]=useState<"ALL"|"ACTIVE"|"INACTIVE"|"LOW">("ALL"); const [page,setPage]=useState(1); const [formOpen,setFormOpen]=useState(false); const [editing,setEditing]=useState<InventoryItem|null>(null);
  const [transactionItem,setTransactionItem]=useState<InventoryItem|null>(null); const [historyItem,setHistoryItem]=useState<InventoryItem|null>(null); const [history,setHistory]=useState<InventoryTransaction[]>([]); const [historyLoading,setHistoryLoading]=useState(false); const [toast,setToast]=useState<ToastState|null>(null); const pageSize=10;
- async function load(){try{setLoading(true);setItems(await getInventoryItems())}catch(e){console.error(e);setToast({type:"error",title:"Gagal memuat inventory",message:"Data inventory tidak dapat diambil dari server."})}finally{setLoading(false)}}
- useEffect(()=>{void load()},[]); useEffect(()=>{setPage(1)},[search,status]); useEffect(()=>{if(!toast)return;const t=window.setTimeout(()=>setToast(null),4000);return()=>window.clearTimeout(t)},[toast]);
+ async function load(silent = false){try{if(!silent)setLoading(true);setItems(await getInventoryItems())}catch(e){console.error(e);setToast({type:"error",title:"Gagal memuat inventory",message:"Data inventory tidak dapat diambil dari server."})}finally{setLoading(false)}}
+ useEffect(()=>{void load()},[]);
+  useRealtime(INVENTORY_EVENTS, () => void load(true)); useEffect(()=>{setPage(1)},[search,status]); useEffect(()=>{if(!toast)return;const t=window.setTimeout(()=>setToast(null),4000);return()=>window.clearTimeout(t)},[toast]);
  const filtered=useMemo(()=>{const q=search.trim().toLowerCase();return items.filter(i=>{const match=!q||i.name.toLowerCase().includes(q)||i.sku.toLowerCase().includes(q)||(i.category??"").toLowerCase().includes(q);const low=Number(i.currentStock)<=Number(i.minimumStock);const st=status==="ALL"||(status==="ACTIVE"&&i.isActive)||(status==="INACTIVE"&&!i.isActive)||(status==="LOW"&&low);return match&&st})},[items,search,status]);
  const totalPages=Math.max(1,Math.ceil(filtered.length/pageSize)); const safePage=Math.min(page,totalPages); const visible=filtered.slice((safePage-1)*pageSize,safePage*pageSize);
  const lowCount=items.filter(i=>Number(i.currentStock)<=Number(i.minimumStock)&&i.isActive).length; const activeCount=items.filter(i=>i.isActive).length;

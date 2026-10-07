@@ -12,7 +12,7 @@ const router = Router();
 
 router.post("/login", authRateLimit({ limit: 8 }), loginController);
 router.post("/google", authRateLimit({ limit: 8 }), googleLoginController);
-router.post("/register/customer", authRateLimit({ limit: 5 }), registerCustomerController);
+router.post("/register/customer", authRateLimit({ limit: 10 }), registerCustomerController);
 router.get("/me", authenticate, meController);
 
 export default router;

@@ -1,7 +1,8 @@
 import { prisma } from "../lib/prisma.js";
 import { findPaymentsByOrderId } from "../repositories/payment.repository.js";
 import { awardPointsForPaidOrder } from "./membership.service.js";
-import { notifyRole } from "./notification.service.js";
+import { notifyCustomer, notifyRole } from "./notification.service.js";
+import { emitOrderEvent, emitPaymentUpdated } from "../websocket/events.js";
 
 async function ensureOrderAccess(orderId: string, customerId?: string) {
   const order = await prisma.order.findUnique({ where: { id: orderId } });
@@ -114,6 +115,23 @@ export async function createNewPayment(data: {
     message: `Pembayaran untuk order ${order.orderCode} sebesar Rp ${data.amount.toLocaleString("id-ID")} berhasil.`,
     type: "SUCCESS",
     excludeUserId: data.receivedById,
+  });
+
+  emitPaymentUpdated({
+    orderId: result.order.id,
+    orderCode: result.order.orderCode,
+    customerId: result.order.customerId,
+    paymentId: result.payment.id,
+    paymentTransactionStatus: result.payment.status,
+    orderPaymentStatus: result.order.paymentStatus,
+  });
+  emitOrderEvent("updated", result.order);
+
+  await notifyCustomer({
+    customerId: result.order.customerId,
+    title: "Pembayaran diterima",
+    message: `Pembayaran Rp ${data.amount.toLocaleString("id-ID")} untuk order ${order.orderCode} sudah dicatat.`,
+    type: "SUCCESS",
   });
 
   return result;

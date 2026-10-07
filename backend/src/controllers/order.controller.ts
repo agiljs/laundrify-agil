@@ -33,6 +33,8 @@ export async function createOrderController(req: Request, res: Response) {
     const customer = await prisma.customer.findUnique({ where: { userId: req.user!.id }, select: { id: true } });
     if (!customer) return res.status(404).json({ success: false, message: "Profil customer tidak ditemukan" });
     customerId = customer.id;
+    // Customer tidak boleh menentukan ongkir sendiri; ongkir diatur oleh admin.
+    data.deliveryFee = 0;
   }
 
   const order = await createNewOrder(data, req.user!.id, customerId);

@@ -6,11 +6,16 @@ import OrderCard from "../components/OrderCard";
 import { getDashboardSummary, getRecentOrders } from "../services/dashboard.service";
 import type { DashboardSummary, Order } from "../types/api";
 import { colors } from "../theme/colors";
+import { useRealtime } from "../hooks/useRealtime";
+
+const HOME_EVENTS = ["order:created", "order:updated", "order:status-updated", "order:deleted", "payment:updated", "data:changed:customers", "data:changed:expenses"] as const;
 
 export default function HomeScreen({ navigation }: any) {
   const [summary, setSummary] = useState<DashboardSummary | null>(null); const [orders, setOrders] = useState<Order[]>([]); const [refreshing, setRefreshing] = useState(false);
   const load = useCallback(async () => { try { const [s, o] = await Promise.all([getDashboardSummary(), getRecentOrders(5)]); setSummary(s); setOrders(o); } catch {} }, []);
   useFocusEffect(useCallback(() => { void load(); }, [load]));
+
+  useRealtime(HOME_EVENTS, () => void load());
   async function refresh() { setRefreshing(true); await load(); setRefreshing(false); }
   const money = (n: number) => `Rp ${Number(n).toLocaleString("id-ID")}`;
   return <ScrollView style={styles.root} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.brand} />}>

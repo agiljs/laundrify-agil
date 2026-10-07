@@ -1,4 +1,5 @@
 import axios from "axios";
+import { disconnectSocket } from "./socket";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:5000/api",
@@ -23,6 +24,8 @@ api.interceptors.response.use(
 
   (error) => {
     if (error.response?.status === 401) {
+      disconnectSocket();
+
       localStorage.removeItem("laundrify_token");
 
       localStorage.removeItem("laundrify_user");

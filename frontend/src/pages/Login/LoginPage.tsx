@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import logo from "../../assets/logo.jpg";
 
+const customerUrl = (import.meta.env.VITE_CUSTOMER_URL as string | undefined) ?? "http://localhost:5174";
 const heroImage = "https://images.unsplash.com/photo-1545173168-9f1947eebb7f?q=80&w=1600&auto=format&fit=crop";
 
 export default function LoginPage() {
@@ -36,7 +37,7 @@ export default function LoginPage() {
               const user = await googleLogin(response.credential);
               if (user.role !== role) { logout(); setError(`Akun ini bukan akun ${role === "ADMIN" ? "admin" : "customer"}.`); return; }
               if (user.role === "ADMIN") navigate("/", { replace: true });
-              else setError("Login customer berhasil. Aplikasi customer Laundrify digunakan melalui React Native.");
+              else { logout(); setError(`Akun customer masuk lewat Aplikasi Customer Laundrify: ${customerUrl}`); }
             } catch (err) {
               setError((err as {response?:{data?:{message?:string}}}).response?.data?.message ?? "Login Google gagal.");
             } finally { setLoading(false); }
@@ -59,7 +60,7 @@ export default function LoginPage() {
       if (remember) localStorage.setItem("laundrify_remember_login", "1");
       if (user.role !== role) { logout(); setError(`Akun ini bukan akun ${role === "ADMIN" ? "admin" : "customer"}.`); return; }
       if (user.role === "ADMIN") navigate("/", { replace: true });
-      else setError("Login customer berhasil. Aplikasi customer Laundrify digunakan melalui React Native.");
+      else { logout(); setError(`Akun customer masuk lewat Aplikasi Customer Laundrify: ${customerUrl}`); }
     } catch (err) {
       setError((err as {response?:{data?:{message?:string}}}).response?.data?.message ?? "Email atau password tidak sesuai.");
     } finally { setLoading(false); }

@@ -24,6 +24,7 @@ import { createPayment, type PaymentInput } from "../services/payment.service";
 import { downloadPaymentReceipt } from "../utils/receipt";
 import { colors } from "../theme/colors";
 import { useFeedback } from "../providers/FeedbackProvider";
+import { useRealtime } from "../hooks/useRealtime";
 
 type Props = NativeStackScreenProps<RootStackParamList, "OrderDetail">;
 type Method = "CASH" | "QRIS" | "BANK_TRANSFER";
@@ -52,6 +53,8 @@ const methodLabel: Record<string, string> = {
   BANK_TRANSFER: "Transfer Bank",
   OTHER: "Lainnya",
 };
+
+const ORDER_EVENTS = ["order:created", "order:updated", "order:status-updated", "order:deleted", "payment:updated"] as const;
 
 export default function OrderDetailScreen({ route, navigation }: Props) {
   const { showSuccess, showError, confirm } = useFeedback();
@@ -82,6 +85,8 @@ export default function OrderDetailScreen({ route, navigation }: Props) {
       void load();
     }, [load]),
   );
+
+  useRealtime(ORDER_EVENTS, () => void load());
 
   if (!order)
     return (

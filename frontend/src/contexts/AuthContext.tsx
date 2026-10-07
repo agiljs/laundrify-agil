@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { disconnectSocket } from "../services/socket";
 import { getMe, getStoredUser, login as loginApi, loginWithGoogle as googleLoginApi, logout as logoutApi, type AuthUser } from "../services/auth.service";
 
 type AuthContextType = {
@@ -44,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return currentUser;
   }
 
-  function logout() { logoutApi(); setUser(null); }
+  function logout() { disconnectSocket(); logoutApi(); setUser(null); }
 
   const value = useMemo(() => ({ user, loading, isAuthenticated: user !== null, login, googleLogin, logout }), [user, loading]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

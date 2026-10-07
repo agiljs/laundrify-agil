@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useRealtime } from "../../hooks/useRealtime";
 
 import {
   ChevronLeft,
@@ -30,6 +31,8 @@ type ToastState = {
   title: string;
   message: string;
 };
+
+const CUSTOMER_EVENTS = ["data:changed:customers"] as const;
 
 export default function CustomersPage() {
   const { user } = useAuth();
@@ -64,9 +67,9 @@ export default function CustomersPage() {
 
   const pageSize = 10;
 
-  async function loadCustomers() {
+  async function loadCustomers(silent = false) {
     try {
-      setLoading(true);
+      if(!silent)setLoading(true);
 
       const data = await getCustomers();
 
@@ -87,6 +90,7 @@ export default function CustomersPage() {
   useEffect(() => {
     void loadCustomers();
   }, []);
+  useRealtime(CUSTOMER_EVENTS, () => void loadCustomers(true));
 
   useEffect(() => {
     setPage(1);

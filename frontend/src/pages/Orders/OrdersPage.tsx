@@ -1,5 +1,6 @@
 import { CheckCircle2, ChevronLeft, ChevronRight, Eye, Loader2, Plus, RefreshCw, Search, ShoppingBag, WalletCards, Clock3 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useRealtime } from "../../hooks/useRealtime";
 import { useSearchParams } from "react-router-dom";
 import type { Order, OrderStatus, PaymentStatus } from "../../types/order";
 import { getOrders } from "../../services/order.service";
@@ -17,6 +18,8 @@ function statusClass(status:OrderStatus){return ({RECEIVED:"bg-slate-100 text-sl
 function paymentClass(status:PaymentStatus){return ({UNPAID:"bg-slate-100 text-slate-600",PARTIAL:"bg-amber-50 text-amber-700",PAID:"bg-emerald-50 text-emerald-700",REFUNDED:"bg-red-50 text-red-700"})[status]}
 function errorMessage(error:unknown){if(typeof error === "object"&&error!==null&&"response" in error)return (error as {response?:{data?:{message?:string}}}).response?.data?.message??"Gagal memuat data order.";return "Gagal memuat data order."}
 
+const ORDER_EVENTS = ["order:created","order:updated","order:status-updated","order:deleted","payment:updated"] as const;
+
 export default function OrdersPage(){
  const [searchParams] = useSearchParams();
  const [orders,setOrders]=useState<Order[]>([]),[loading,setLoading]=useState(true),[refreshing,setRefreshing]=useState(false),[error,setError]=useState(""),[search,setSearch]=useState(""),[statusFilter,setStatusFilter]=useState<"ALL"|OrderStatus>("ALL"),[paymentFilter,setPaymentFilter]=useState<"ALL"|PaymentStatus>("ALL"),[page,setPage]=useState(1),[showForm,setShowForm]=useState(false),[selectedOrder,setSelectedOrder]=useState<Order|null>(null),[toast,setToast]=useState<{title:string;message:string;type:ToastType}|null>(null);
@@ -26,7 +29,7 @@ export default function OrdersPage(){
   if (searchParams.get("new") === "1") setShowForm(true);
  }, [searchParams]);
  async function loadOrders(silent=false){try{silent?setRefreshing(true):setLoading(true);setError("");setOrders(await getOrders())}catch(e){setError(errorMessage(e))}finally{setLoading(false);setRefreshing(false)}}
- useEffect(()=>{void loadOrders()},[]); useEffect(()=>{setPage(1)},[search,statusFilter,paymentFilter]); useEffect(()=>{if(!toast)return;const t=window.setTimeout(()=>setToast(null),3800);return()=>window.clearTimeout(t)},[toast]);
+ useEffect(()=>{void loadOrders()},[]); useRealtime(ORDER_EVENTS,()=>void loadOrders(true)); useEffect(()=>{setSelectedOrder(cur=>cur?(orders.find(o=>o.id===cur.id)??cur):cur)},[orders]); useEffect(()=>{setPage(1)},[search,statusFilter,paymentFilter]); useEffect(()=>{if(!toast)return;const t=window.setTimeout(()=>setToast(null),3800);return()=>window.clearTimeout(t)},[toast]);
  const filtered=useMemo(()=>{const k=search.trim().toLowerCase();return orders.filter(o=>{const match=!k||o.orderCode.toLowerCase().includes(k)||o.customer?.name.toLowerCase().includes(k)||o.customer?.phone.toLowerCase().includes(k);return match&&(statusFilter==="ALL"||o.status===statusFilter)&&(paymentFilter==="ALL"||o.paymentStatus===paymentFilter)})},[orders,search,statusFilter,paymentFilter]);
  const pages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE)),safePage=Math.min(page,pages),rows=filtered.slice((safePage-1)*PAGE_SIZE,safePage*PAGE_SIZE);
  const paidCount=orders.filter(o=>o.paymentStatus==="PAID").length, unpaidCount=orders.filter(o=>o.paymentStatus!=="PAID"&&o.paymentStatus!=="REFUNDED").length, activeCount=orders.filter(o=>["RECEIVED","WASHING","DRYING","IRONING","READY"].includes(o.status)).length, totalValue=orders.reduce((s,o)=>s+Number(o.total),0);

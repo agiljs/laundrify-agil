@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useRealtime } from "../../hooks/useRealtime";
 
 import {
   ChevronLeft,
@@ -31,6 +32,8 @@ type ToastState = {
   title: string;
   message: string;
 };
+
+const SERVICE_EVENTS = ["data:changed:services"] as const;
 
 export default function ServicesPage() {
   const { user } = useAuth();
@@ -67,9 +70,9 @@ export default function ServicesPage() {
 
   const pageSize = 10;
 
-  async function loadServices() {
+  async function loadServices(silent = false) {
     try {
-      setLoading(true);
+      if(!silent)setLoading(true);
 
       const data = await getServices();
 
@@ -90,6 +93,7 @@ export default function ServicesPage() {
   useEffect(() => {
     void loadServices();
   }, []);
+  useRealtime(SERVICE_EVENTS, () => void loadServices(true));
 
   useEffect(() => {
     setPage(1);

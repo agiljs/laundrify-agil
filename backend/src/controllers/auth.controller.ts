@@ -5,7 +5,10 @@ import {
   login,
   loginWithGoogle,
   registerCustomer,
+  RegistrationError,
 } from "../services/auth.service.js";
+import { notifyRole } from "../services/notification.service.js";
+import { emitDataChanged } from "../websocket/events.js";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -21,8 +24,9 @@ const registerCustomerSchema = z.object({
   name: z.string().min(2).max(150),
   email: z.string().email().max(150),
   password: z.string().min(8).max(100),
-  phone: z.string().min(5).max(30),
+  phone: z.string().min(8).max(30),
   address: z.string().max(500).optional(),
+  customerCode: z.string().max(30).optional(),
 });
 
 export async function loginController(req: Request, res: Response) {
@@ -80,16 +84,31 @@ export async function registerCustomerController(req: Request, res: Response) {
 
     const result = await registerCustomer(validation.data);
 
+    emitDataChanged("customers", "POST");
+    // Notifikasi ke admin tidak boleh menggagalkan pendaftaran yang sudah berhasil.
+    void notifyRole({
+      role: "ADMIN",
+      title: result.linkedExisting ? "Pelanggan lama membuat akun" : "Customer baru mendaftar",
+      message: `${result.user.name} (${result.user.phone ?? "-"}) ${result.linkedExisting ? "menautkan akun ke data pelanggan lama." : "mendaftar lewat aplikasi customer."}`,
+      type: "INFO",
+    }).catch(() => undefined);
+
     return res.status(201).json({
       success: true,
       message: "Akun customer berhasil dibuat",
-      data: result,
+      data: { token: result.token, user: result.user, linkedExisting: result.linkedExisting },
     });
   } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: error instanceof Error ? error.message : "Registrasi gagal",
-    });
+    if (error instanceof RegistrationError) {
+      return res.status(error.code === "CLAIM_CODE_INVALID" ? 403 : 409).json({
+        success: false,
+        code: error.code,
+        message: error.message,
+      });
+    }
+
+    const message = error instanceof Error ? error.message : "Registrasi gagal";
+    return res.status(message.includes("sudah digunakan") ? 409 : 400).json({ success: false, message });
   }
 }
 
